@@ -37,13 +37,13 @@ const router = createBrowserRouter([
         <HospitalInventory />
       </IsAuthenticated>
     ),
-    
-  }, {
+  },
+  {
     path: "/hospital/staff",
     element: (
       <IsAuthenticated>
         <HospitalStaff />
-        </IsAuthenticated>
+      </IsAuthenticated>
     ),
   },
   {
@@ -55,7 +55,9 @@ const router = createBrowserRouter([
     ),
   },
   {
-  }
+    path: "/guest",
+    element: <GuestUser />,
+  },
 ]);
 
 function App() {

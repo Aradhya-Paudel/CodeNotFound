@@ -158,7 +158,12 @@ function Login() {
               <p className="text-sm text-gray-500">
                 Need to report an emergency?
               </p>
-              <button className="w-full px-6 py-3 border border-primary text-primary hover:bg-primary hover:text-white rounded-lg text-sm font-semibold transition-all">
+              <button
+                className="w-full px-6 py-3 border border-primary text-primary hover:bg-primary hover:text-white rounded-lg text-sm font-semibold transition-all"
+                onClick={() => {
+                  navigate("/guest");
+                }}
+              >
                 Continue as Guest
               </button>
             </div>
