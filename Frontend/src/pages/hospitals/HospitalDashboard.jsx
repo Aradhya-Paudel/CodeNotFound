@@ -79,41 +79,34 @@ function HospitalDashboard() {
             </div>
           </div>
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <a
+            <Link
+              to="/hospital"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-white"
-              href="#"
             >
               <span className="material-symbols-outlined">dashboard</span>
               <span className="text-sm font-medium">Dashboard</span>
-            </a>
-            <a
+            </Link>
+            <Link
+              to="/hospital/inventory"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">inventory_2</span>
               <span className="text-sm font-medium">Inventory</span>
-            </a>
-            <a
+            </Link>
+            <Link
+              to="/hospital/fleet"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">ambulance</span>
               <span className="text-sm font-medium">Fleet Management</span>
-            </a>
-            <a
+            </Link>
+            <Link
+              to="/hospital/staff"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">group</span>
               <span className="text-sm font-medium">Staffing</span>
-            </a>
-            <a
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
-            >
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="text-sm font-medium">Alerts</span>
-            </a>
+            </Link>
           </nav>
           <div className="p-4 border-t border-slate-200">
             <button

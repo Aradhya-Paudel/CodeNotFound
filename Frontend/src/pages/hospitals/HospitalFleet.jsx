@@ -1,4 +1,143 @@
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+
 function HospitalFleet() {
+  const navigate = useNavigate();
+  const [hospital, setHospital] = useState(null);
+  const [ambulanceCount, setAmbulanceCount] = useState(0);
+  const [bloodRequests, setBloodRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const userAvatarUrl =
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuAznK4Z6bAxZgs6fcy-L7t74V4PiEJ370LX_cCud0cr1VAc-o85wtbdeYFkWUGW10giLXaykhB_FlGKTV3iyz0PKJXRVrQ_rZcGWI-cwre6-yDLpWYagksKCsfl3nd67fFcdVWT7U-Jpa6Tl_l1Q9fHmut1hLpytx4-6eRhzAsihyrNG5IHPoQ9oukaQkyNRfgFes0jM4gnceJ2V7xjfh5xR4M3WkPMGd_JSgexHtXMRrZLnGSP0FUI3Ibt1GwPjrTioOKZ30ZQ9ms";
+
+  // API endpoint placeholder - to be filled later
+  const API_ENDPOINT = "";
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminAuth");
+    localStorage.removeItem("userType");
+    localStorage.removeItem("userName");
+    navigate("/", { replace: true });
+  };
+
+  // Load hospital data from JSON based on localStorage ID
+  useEffect(() => {
+    const loadHospitalData = async () => {
+      try {
+        const response = await fetch("/hospitals.json");
+        const data = await response.json();
+        const hospitalId = parseInt(localStorage.getItem("hospitalId")) || 1;
+        const selectedHospital = data.hospitals.find(
+          (h) => h.id === hospitalId,
+        );
+
+        if (!selectedHospital) {
+          setError("Hospital not found");
+        } else {
+          setHospital(selectedHospital);
+          setAmbulanceCount(selectedHospital.ambulanceCount);
+          setBloodRequests(selectedHospital.bloodRequests || []);
+        }
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    loadHospitalData();
+  }, []);
+
+  const handleIncrement = () => {
+    setAmbulanceCount((prev) => prev + 1);
+  };
+
+  const handleDecrement = () => {
+    setAmbulanceCount((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleApproveRequest = async (requestId) => {
+    setBloodRequests((prev) =>
+      prev.map((req) =>
+        req.requestId === requestId ? { ...req, status: "Approved" } : req,
+      ),
+    );
+    // POST to API when endpoint is available
+    if (API_ENDPOINT) {
+      try {
+        await fetch(`${API_ENDPOINT}/blood-requests/${requestId}/approve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "Approved" }),
+        });
+      } catch (err) {
+        console.error("Error approving request:", err);
+      }
+    }
+  };
+
+  const handleDeclineRequest = async (requestId) => {
+    setBloodRequests((prev) =>
+      prev.map((req) =>
+        req.requestId === requestId ? { ...req, status: "Declined" } : req,
+      ),
+    );
+    // POST to API when endpoint is available
+    if (API_ENDPOINT) {
+      try {
+        await fetch(`${API_ENDPOINT}/blood-requests/${requestId}/decline`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "Declined" }),
+        });
+      } catch (err) {
+        console.error("Error declining request:", err);
+      }
+    }
+  };
+
+  const handleUpdateFleet = async () => {
+    // POST to API when endpoint is available
+    if (API_ENDPOINT) {
+      try {
+        await fetch(`${API_ENDPOINT}/hospital/${hospital.id}/fleet`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ambulanceCount,
+            bloodRequests,
+          }),
+        });
+        alert("Fleet records updated successfully!");
+      } catch (err) {
+        console.error("Error updating fleet:", err);
+        alert("Error updating fleet records");
+      }
+    } else {
+      alert(
+        "Fleet records updated successfully! (API endpoint not configured)",
+      );
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-50">
+        <div className="text-slate-600">Loading hospital data...</div>
+      </div>
+    );
+  }
+
+  if (error || !hospital) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-50">
+        <div className="text-red-600">Error loading hospital data: {error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="Main bg-slate-50 text-slate-900">
       <div className="flex h-screen overflow-hidden">
@@ -9,7 +148,7 @@ function HospitalFleet() {
             </div>
             <div>
               <h1 className="text-primary text-sm font-bold leading-tight">
-                City General
+                {hospital.name}
               </h1>
               <p className="text-slate-500 text-xs font-medium">
                 Emergency Hub
@@ -17,48 +156,42 @@ function HospitalFleet() {
             </div>
           </div>
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <a
+            <Link
+              to="/hospital"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">dashboard</span>
               <span className="text-sm font-medium">Dashboard</span>
-            </a>
-            <a
+            </Link>
+            <Link
+              to="/hospital/inventory"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">inventory_2</span>
               <span className="text-sm font-medium">Inventory</span>
-            </a>
-            <a
+            </Link>
+            <Link
+              to="/hospital/fleet"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-white shadow-md shadow-primary/20"
-              href="#"
             >
               <span className="material-symbols-outlined">ambulance</span>
               <span className="text-sm font-medium">Fleet Management</span>
-            </a>
-            <a
+            </Link>
+            <Link
+              to="/hospital/staff"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">group</span>
               <span className="text-sm font-medium">Staffing</span>
-            </a>
-            <a
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
-            >
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="text-sm font-medium">Alerts</span>
-            </a>
+            </Link>
           </nav>
           <div className="p-4 border-t border-slate-200">
-            <button className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20">
-              <span className="material-symbols-outlined text-sm">
-                campaign
-              </span>
-              <span>Emergency Mode</span>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-red-700 text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-red-800 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">logout</span>
+              <span>Logout</span>
             </button>
           </div>
         </aside>
@@ -68,32 +201,12 @@ function HospitalFleet() {
               <h2 className="text-primary text-lg font-bold">
                 Fleet Management
               </h2>
-              <div className="max-w-md w-full relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                  search
-                </span>
-                <input
-                  className="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary"
-                  placeholder="Search vehicles or requests..."
-                  type="text"
-                />
-              </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 px-4 py-1.5 bg-slate-100 rounded-full">
-                <span className="material-symbols-outlined text-slate-500 text-lg">
-                  person
-                </span>
-                <span className="text-xs font-bold text-slate-600">
-                  USER ID: EMP-9421
-                </span>
-              </div>
               <div
                 className="h-8 w-8 rounded-full bg-cover bg-center border border-slate-200"
-                style={{
-                  backgroundImage:
-                    "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAPa58irfqG_HKVD7ZdyXY496Y0YBm0fELjwfyWg-g1MoucvaDahGSYJJQMfuCCutS8IHt17KjpUUr8QcCec2sPCsTsdxYfabtHkgb4QwllUkCjyX41aZB2iCWtmTodtBvOkNW0zU_IUU-kmHI8m2LHITpx2ktHgB65UKQvnmOqtVuyEahb6qjwF7dxAU3pRpZZs9WWy82Bd0DJOQmXhSPB_mJR65DR2ojxqAARv9s3ySjS7EDm_pGo6v4qBgHtJanRQbeQbq_6YOE')",
-                }}
+                style={{ backgroundImage: `url('${userAvatarUrl}')` }}
+                title="User profile avatar"
               ></div>
             </div>
           </header>
@@ -134,7 +247,10 @@ function HospitalFleet() {
                       </div>
                     </div>
                     <div className="flex items-center w-full max-w-60">
-                      <button className="w-12 h-12 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
+                      <button
+                        onClick={handleDecrement}
+                        className="w-12 h-12 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors"
+                      >
                         <span className="material-symbols-outlined">
                           remove
                         </span>
@@ -142,9 +258,15 @@ function HospitalFleet() {
                       <input
                         className="w-full h-12 text-center border-y border-slate-300 bg-white text-xl font-bold text-primary focus:ring-0 focus:border-slate-300"
                         type="number"
-                        value="12"
+                        value={ambulanceCount}
+                        onChange={(e) =>
+                          setAmbulanceCount(parseInt(e.target.value) || 0)
+                        }
                       />
-                      <button className="w-12 h-12 flex items-center justify-center rounded-r-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
+                      <button
+                        onClick={handleIncrement}
+                        className="w-12 h-12 flex items-center justify-center rounded-r-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors"
+                      >
                         <span className="material-symbols-outlined">add</span>
                       </button>
                     </div>
@@ -161,75 +283,91 @@ function HospitalFleet() {
                   </h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="mb-4">
-                      <h4 className="font-bold text-primary text-lg">
-                        St. Mary's Hospital
-                      </h4>
-                    </div>
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center gap-3 text-sm text-slate-600">
-                        <span className="material-symbols-outlined text-lg">
-                          bloodtype
-                        </span>
-                        <span>Request for 50 liters of O- Blood</span>
+                  {bloodRequests.map((request) => (
+                    <div
+                      key={request.requestId}
+                      className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm"
+                    >
+                      <div className="mb-4">
+                        <h4 className="font-bold text-primary text-lg">
+                          {request.hospitalName}
+                        </h4>
+                        <p className="text-slate-500 text-xs">
+                          {request.requestId}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-slate-600">
-                        <span className="material-symbols-outlined text-lg">
-                          location_on
-                        </span>
-                        <span>4.2 miles from current location</span>
+                      <div className="space-y-3 mb-6">
+                        <div className="flex items-center gap-3 text-sm text-slate-600">
+                          <span className="material-symbols-outlined text-lg">
+                            bloodtype
+                          </span>
+                          <span>
+                            Request for {request.litersNeeded} liters of{" "}
+                            {request.bloodType} Blood
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-slate-600">
+                          <span className="material-symbols-outlined text-lg">
+                            location_on
+                          </span>
+                          <span>
+                            {request.distanceMiles} miles from current location
+                          </span>
+                        </div>
+                        {request.status !== "Pending" && (
+                          <div className="flex items-center gap-3 text-sm">
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-bold ${
+                                request.status === "Approved"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              {request.status}
+                            </span>
+                          </div>
+                        )}
                       </div>
+                      {request.status === "Pending" && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            onClick={() =>
+                              handleDeclineRequest(request.requestId)
+                            }
+                            className="py-2.5 rounded-lg border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors"
+                          >
+                            Decline
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleApproveRequest(request.requestId)
+                            }
+                            className="py-2.5 rounded-lg bg-primary text-white font-bold text-sm hover:opacity-90 shadow-md shadow-primary/20 transition-all"
+                          >
+                            Approve
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button className="py-2.5 rounded-lg border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors">
-                        Decline
-                      </button>
-                      <button className="py-2.5 rounded-lg bg-primary text-white font-bold text-sm hover:opacity-90 shadow-md shadow-primary/20 transition-all">
-                        Approve
-                      </button>
-                    </div>
-                  </div>
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="mb-4">
-                      <h4 className="font-bold text-primary text-lg">
-                        Northside Medical Center
-                      </h4>
-                    </div>
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center gap-3 text-sm text-slate-600">
-                        <span className="material-symbols-outlined text-lg">
-                          bloodtype
-                        </span>
-                        <span>Request for 30 liters of A+ Blood</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-slate-600">
-                        <span className="material-symbols-outlined text-lg">
-                          location_on
-                        </span>
-                        <span>6.8 miles from current location</span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button className="py-2.5 rounded-lg border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors">
-                        Decline
-                      </button>
-                      <button className="py-2.5 rounded-lg bg-primary text-white font-bold text-sm hover:opacity-90 shadow-md shadow-primary/20 transition-all">
-                        Approve
-                      </button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </section>
               <div className="pt-8 border-t border-slate-200 flex flex-col items-center">
-                <button className="w-full max-w-lg bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-lg transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/25 text-lg">
+                <button
+                  onClick={handleUpdateFleet}
+                  className="w-full max-w-lg bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-lg transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/25 text-lg"
+                >
                   <span className="material-symbols-outlined text-2xl">
                     save
                   </span>
                   <span>Update Fleet Records</span>
                 </button>
                 <p className="text-slate-400 text-[10px] mt-4 uppercase tracking-widest font-bold">
-                  Automatic sync enabled • Last updated at 14:32
+                  Automatic sync enabled • Last updated at{" "}
+                  {new Date().toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
             </div>

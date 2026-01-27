@@ -8,57 +8,29 @@
       "phone": "+1-555-0101",
       "address": "123 Medical Plaza, Healthcare City, HC 12345",
       "ambulanceCount": 12,
-      "staffCount": {
-        "Trauma Surgery": 45,
-        "Cardiology": 42,
-        "Neurology": 38,
-        "Orthopedics": 35,
-        "Oncology": 40,
-        "Gastroenterology": 36,
-        "Pediatrics": 34,
-        "Psychiatry": 32,
-        "Dermatology": 28,
-        "Respiratory": 37,
-        "Urology": 30,
-        "Rheumatology": 25
-      },
       "bedsAvailable": 50,
       "bloodInventory": {
-        "total": 1280,
+        "total": 1728,
         "bloodTypes": [
-          {
-            "type": "A+",
-            "liters": 450
-          },
-          {
-            "type": "A-",
-            "liters": 45
-          },
-          {
-            "type": "B+",
-            "liters": 320
-          },
-          {
-            "type": "B-",
-            "liters": 84
-          },
-          {
-            "type": "O+",
-            "liters": 560
-          },
-          {
-            "type": "O-",
-            "liters": 12
-          },
-          {
-            "type": "AB+",
-            "liters": 192
-          },
-          {
-            "type": "AB-",
-            "liters": 65
-          }
+          { "type": "A+", "liters": 450 },
+          { "type": "A-", "liters": 45 },
+          { "type": "B+", "liters": 320 },
+          { "type": "B-", "liters": 84 },
+          { "type": "O+", "liters": 560 },
+          { "type": "O-", "liters": 12 },
+          { "type": "AB+", "liters": 192 },
+          { "type": "AB-", "liters": 65 }
         ]
+      },
+      "staffCount": {
+        "Emergency Physicians": 14,
+        "Surgeons": 8,
+        "ICU Nurses": 32,
+        "Paramedics": 18,
+        "Anesthesiologists": 6,
+        "Radiologists": 4,
+        "Lab Technicians": 12,
+        "Support Staff": 25
       },
       "specialties": {
         "active": 12,
@@ -103,11 +75,22 @@
           "progress": 25
         }
       ],
-      "icuCapacity": 95,
-      "alerts": [
+      "bloodRequests": [
         {
-          "type": "CRITICAL",
-          "message": "ICU Capacity at 95%. Diversion protocol recommended for non-trauma cases."
+          "requestId": "#BR-101",
+          "hospitalName": "Riverdale Hospital",
+          "bloodType": "B+",
+          "litersNeeded": 25,
+          "distanceMiles": 3.4,
+          "status": "Pending"
+        },
+        {
+          "requestId": "#BR-102",
+          "hospitalName": "Metro Health Clinic",
+          "bloodType": "O-",
+          "litersNeeded": 15,
+          "distanceMiles": 5.9,
+          "status": "Pending"
         }
       ]
     },
@@ -119,55 +102,29 @@
       "phone": "+1-555-0102",
       "address": "456 Hospital Avenue, Downtown, HC 54321",
       "ambulanceCount": 8,
-      "staffCount": {
-        "Emergency Medicine": 42,
-        "Internal Medicine": 38,
-        "Cardiology": 40,
-        "Radiology": 35,
-        "Pathology": 28,
-        "Anesthesia": 36,
-        "Surgery": 41,
-        "Obstetrics": 34,
-        "Pediatrics": 32,
-        "Rehabilitation": 24
-      },
       "bedsAvailable": 51,
       "bloodInventory": {
         "total": 950,
         "bloodTypes": [
-          {
-            "type": "A+",
-            "liters": 280
-          },
-          {
-            "type": "A-",
-            "liters": 35
-          },
-          {
-            "type": "B+",
-            "liters": 250
-          },
-          {
-            "type": "B-",
-            "liters": 60
-          },
-          {
-            "type": "O+",
-            "liters": 220
-          },
-          {
-            "type": "O-",
-            "liters": 25
-          },
-          {
-            "type": "AB+",
-            "liters": 50
-          },
-          {
-            "type": "AB-",
-            "liters": 30
-          }
+          { "type": "A+", "liters": 280 },
+          { "type": "A-", "liters": 35 },
+          { "type": "B+", "liters": 250 },
+          { "type": "B-", "liters": 60 },
+          { "type": "O+", "liters": 220 },
+          { "type": "O-", "liters": 25 },
+          { "type": "AB+", "liters": 50 },
+          { "type": "AB-", "liters": 30 }
         ]
+      },
+      "staffCount": {
+        "Emergency Physicians": 10,
+        "Surgeons": 6,
+        "ICU Nurses": 24,
+        "Paramedics": 12,
+        "Anesthesiologists": 4,
+        "Radiologists": 3,
+        "Lab Technicians": 8,
+        "Support Staff": 20
       },
       "specialties": {
         "active": 10,
@@ -202,11 +159,14 @@
           "progress": 35
         }
       ],
-      "icuCapacity": 75,
-      "alerts": [
+      "bloodRequests": [
         {
-          "type": "WARNING",
-          "message": "Blood inventory running low. Urgent replenishment needed for O- type."
+          "requestId": "#BR-201",
+          "hospitalName": "Green Valley Hospital",
+          "bloodType": "A-",
+          "litersNeeded": 20,
+          "distanceMiles": 4.1,
+          "status": "Pending"
         }
       ]
     },
@@ -218,59 +178,29 @@
       "phone": "+1-555-0103",
       "address": "789 Emergency Lane, Relief City, HC 98765",
       "ambulanceCount": 15,
-      "staffCount": {
-        "Trauma Surgery": 50,
-        "Emergency Medicine": 48,
-        "Critical Care": 45,
-        "Cardiothoracic Surgery": 42,
-        "Neurosurgery": 40,
-        "Orthopedic Surgery": 38,
-        "General Surgery": 42,
-        "Vascular Surgery": 35,
-        "Burn Unit": 38,
-        "Toxicology": 25,
-        "Infectious Disease": 32,
-        "Endocrinology": 28,
-        "Nephrology": 30,
-        "Hepatology": 26
-      },
       "bedsAvailable": 50,
       "bloodInventory": {
         "total": 1500,
         "bloodTypes": [
-          {
-            "type": "A+",
-            "liters": 400
-          },
-          {
-            "type": "A-",
-            "liters": 80
-          },
-          {
-            "type": "B+",
-            "liters": 350
-          },
-          {
-            "type": "B-",
-            "liters": 100
-          },
-          {
-            "type": "O+",
-            "liters": 380
-          },
-          {
-            "type": "O-",
-            "liters": 50
-          },
-          {
-            "type": "AB+",
-            "liters": 90
-          },
-          {
-            "type": "AB-",
-            "liters": 50
-          }
+          { "type": "A+", "liters": 400 },
+          { "type": "A-", "liters": 80 },
+          { "type": "B+", "liters": 350 },
+          { "type": "B-", "liters": 100 },
+          { "type": "O+", "liters": 380 },
+          { "type": "O-", "liters": 50 },
+          { "type": "AB+", "liters": 90 },
+          { "type": "AB-", "liters": 50 }
         ]
+      },
+      "staffCount": {
+        "Emergency Physicians": 18,
+        "Surgeons": 12,
+        "ICU Nurses": 40,
+        "Paramedics": 25,
+        "Anesthesiologists": 8,
+        "Radiologists": 5,
+        "Lab Technicians": 15,
+        "Support Staff": 30
       },
       "specialties": {
         "active": 14,
@@ -317,11 +247,22 @@
           "progress": 40
         }
       ],
-      "icuCapacity": 85,
-      "alerts": [
+      "bloodRequests": [
         {
-          "type": "INFO",
-          "message": "Trauma surgery team on standby. Operating rooms prepared."
+          "requestId": "#BR-301",
+          "hospitalName": "St. Luke's Trauma Center",
+          "bloodType": "AB+",
+          "litersNeeded": 18,
+          "distanceMiles": 2.7,
+          "status": "Pending"
+        },
+        {
+          "requestId": "#BR-302",
+          "hospitalName": "Westside Medical",
+          "bloodType": "O+",
+          "litersNeeded": 40,
+          "distanceMiles": 7.3,
+          "status": "Pending"
         }
       ]
     },
@@ -333,56 +274,29 @@
       "phone": "+1-555-0104",
       "address": "321 Sacred Heart Ave, Holy City, HC 11223",
       "ambulanceCount": 7,
-      "staffCount": {
-        "Oncology": 38,
-        "Cardiology": 35,
-        "Pulmonology": 32,
-        "Gastroenterology": 28,
-        "Neurology": 30,
-        "Dermatology": 22,
-        "ENT": 26,
-        "Ophthalmology": 24,
-        "Rheumatology": 20,
-        "Immunology": 18,
-        "Nephrology": 27
-      },
       "bedsAvailable": 53,
       "bloodInventory": {
         "total": 800,
         "bloodTypes": [
-          {
-            "type": "A+",
-            "liters": 200
-          },
-          {
-            "type": "A-",
-            "liters": 40
-          },
-          {
-            "type": "B+",
-            "liters": 180
-          },
-          {
-            "type": "B-",
-            "liters": 50
-          },
-          {
-            "type": "O+",
-            "liters": 200
-          },
-          {
-            "type": "O-",
-            "liters": 30
-          },
-          {
-            "type": "AB+",
-            "liters": 60
-          },
-          {
-            "type": "AB-",
-            "liters": 40
-          }
+          { "type": "A+", "liters": 200 },
+          { "type": "A-", "liters": 40 },
+          { "type": "B+", "liters": 180 },
+          { "type": "B-", "liters": 50 },
+          { "type": "O+", "liters": 200 },
+          { "type": "O-", "liters": 30 },
+          { "type": "AB+", "liters": 60 },
+          { "type": "AB-", "liters": 40 }
         ]
+      },
+      "staffCount": {
+        "Emergency Physicians": 8,
+        "Surgeons": 5,
+        "ICU Nurses": 20,
+        "Paramedics": 10,
+        "Anesthesiologists": 3,
+        "Radiologists": 2,
+        "Lab Technicians": 6,
+        "Support Staff": 18
       },
       "specialties": {
         "active": 11,
@@ -412,31 +326,20 @@
       ],
       "bloodRequests": [
         {
-          "requestId": "#BR-001",
+          "requestId": "#BR-401",
           "hospitalName": "St. Mary's Hospital",
           "bloodType": "O-",
           "litersNeeded": 50,
-          
-          
           "distanceMiles": 4.2,
           "status": "Pending"
         },
         {
-          "requestId": "#BR-002",
+          "requestId": "#BR-402",
           "hospitalName": "Northside Medical Center",
           "bloodType": "A+",
           "litersNeeded": 30,
-          
-          
           "distanceMiles": 6.8,
           "status": "Pending"
-        }
-      ],
-      "icuCapacity": 62,
-      "alerts": [
-        {
-          "type": "WARNING",
-          "message": "Cardiology unit is at capacity. Some cases may need to be redirected."
         }
       ]
     },
@@ -448,58 +351,29 @@
       "phone": "+1-555-0105",
       "address": "654 Healing Boulevard, Wellness County, HC 77777",
       "ambulanceCount": 10,
-      "staffCount": {
-        "General Medicine": 40,
-        "Surgery": 42,
-        "Pediatrics": 36,
-        "Obstetrics & Gynecology": 38,
-        "Psychiatry": 28,
-        "Urology": 30,
-        "ENT": 26,
-        "Orthopedics": 34,
-        "Anesthesia": 35,
-        "Radiology": 32,
-        "Pathology": 25,
-        "Microbiology": 22,
-        "Pharmacology": 20
-      },
       "bedsAvailable": 61,
       "bloodInventory": {
-        "total": 1100,
+        "total": 1120,
         "bloodTypes": [
-          {
-            "type": "A+",
-            "liters": 300
-          },
-          {
-            "type": "A-",
-            "liters": 50
-          },
-          {
-            "type": "B+",
-            "liters": 280
-          },
-          {
-            "type": "B-",
-            "liters": 70
-          },
-          {
-            "type": "O+",
-            "liters": 280
-          },
-          {
-            "type": "O-",
-            "liters": 40
-          },
-          {
-            "type": "AB+",
-            "liters": 60
-          },
-          {
-            "type": "AB-",
-            "liters": 40
-          }
+          { "type": "A+", "liters": 300 },
+          { "type": "A-", "liters": 50 },
+          { "type": "B+", "liters": 280 },
+          { "type": "B-", "liters": 70 },
+          { "type": "O+", "liters": 280 },
+          { "type": "O-", "liters": 40 },
+          { "type": "AB+", "liters": 60 },
+          { "type": "AB-", "liters": 40 }
         ]
+      },
+      "staffCount": {
+        "Emergency Physicians": 12,
+        "Surgeons": 7,
+        "ICU Nurses": 28,
+        "Paramedics": 15,
+        "Anesthesiologists": 5,
+        "Radiologists": 4,
+        "Lab Technicians": 10,
+        "Support Staff": 22
       },
       "specialties": {
         "active": 13,
@@ -537,11 +411,22 @@
           "progress": 20
         }
       ],
-      "icuCapacity": 68,
-      "alerts": [
+      "bloodRequests": [
         {
-          "type": "INFO",
-          "message": "OB/GYN department is fully operational. Maternity ward ready for admissions."
+          "requestId": "#BR-501",
+          "hospitalName": "Eastview Hospital",
+          "bloodType": "B-",
+          "litersNeeded": 22,
+          "distanceMiles": 5.1,
+          "status": "Pending"
+        },
+        {
+          "requestId": "#BR-502",
+          "hospitalName": "Lakeside Clinic",
+          "bloodType": "O+",
+          "litersNeeded": 35,
+          "distanceMiles": 8.4,
+          "status": "Pending"
         }
       ]
     }

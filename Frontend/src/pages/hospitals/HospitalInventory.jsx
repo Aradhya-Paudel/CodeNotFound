@@ -11,6 +11,9 @@ function HospitalInventory() {
   const userAvatarUrl =
     "https://lh3.googleusercontent.com/aida-public/AB6AXuAznK4Z6bAxZgs6fcy-L7t74V4PiEJ370LX_cCud0cr1VAc-o85wtbdeYFkWUGW10giLXaykhB_FlGKTV3iyz0PKJXRVrQ_rZcGWI-cwre6-yDLpWYagksKCsfl3nd67fFcdVWT7U-Jpa6Tl_l1Q9fHmut1hLpytx4-6eRhzAsihyrNG5IHPoQ9oukaQkyNRfgFes0jM4gnceJ2V7xjfh5xR4M3WkPMGd_JSgexHtXMRrZLnGSP0FUI3Ibt1GwPjrTioOKZ30ZQ9ms";
 
+  // API endpoint placeholder - to be filled later
+  const API_ENDPOINT = "";
+
   const handleLogout = () => {
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userType");
@@ -25,8 +28,7 @@ function HospitalInventory() {
         const response = await fetch("/hospitals.json");
         const data = await response.json();
         // Get hospital ID from localStorage
-        const hospitalId =
-          localStorage.getItem("hospitalId") || data.hospitals[0].id;
+        const hospitalId = parseInt(localStorage.getItem("hospitalId")) || 1;
         const selectedHospital = data.hospitals.find(
           (h) => h.id === hospitalId,
         );
@@ -74,8 +76,22 @@ function HospitalInventory() {
   };
 
   const handleUpdateInventory = async () => {
-    // Update logic can be implemented here
-    alert("Inventory updated successfully!");
+    // POST to API when endpoint is available
+    if (API_ENDPOINT) {
+      try {
+        await fetch(`${API_ENDPOINT}/hospital/${hospital.id}/inventory`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bloodInventory: inventoryData }),
+        });
+        alert("Inventory updated successfully!");
+      } catch (err) {
+        console.error("Error updating inventory:", err);
+        alert("Error updating inventory");
+      }
+    } else {
+      alert("Inventory updated successfully! (API endpoint not configured)");
+    }
   };
 
   if (loading) {
@@ -119,31 +135,27 @@ function HospitalInventory() {
               <span className="material-symbols-outlined">dashboard</span>
               <span className="text-sm font-medium">Dashboard</span>
             </Link>
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-white">
+            <Link
+              to="/hospital/inventory"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-white shadow-md shadow-primary/20"
+            >
               <span className="material-symbols-outlined">inventory_2</span>
               <span className="text-sm font-medium">Inventory</span>
-            </div>
-            <a
+            </Link>
+            <Link
+              to="/hospital/fleet"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">ambulance</span>
               <span className="text-sm font-medium">Fleet Management</span>
-            </a>
-            <a
+            </Link>
+            <Link
+              to="/hospital/staff"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">group</span>
               <span className="text-sm font-medium">Staffing</span>
-            </a>
-            <a
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
-            >
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="text-sm font-medium">Alerts</span>
-            </a>
+            </Link>
           </nav>
           <div className="p-4 border-t border-slate-200">
             <button

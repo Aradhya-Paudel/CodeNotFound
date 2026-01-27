@@ -1,4 +1,123 @@
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+
 function HospitalStaff() {
+  const navigate = useNavigate();
+  const [hospital, setHospital] = useState(null);
+  const [staffData, setStaffData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const userAvatarUrl =
+    "https://lh3.googleusercontent.com/aida-public/AB6AXuAznK4Z6bAxZgs6fcy-L7t74V4PiEJ370LX_cCud0cr1VAc-o85wtbdeYFkWUGW10giLXaykhB_FlGKTV3iyz0PKJXRVrQ_rZcGWI-cwre6-yDLpWYagksKCsfl3nd67fFcdVWT7U-Jpa6Tl_l1Q9fHmut1hLpytx4-6eRhzAsihyrNG5IHPoQ9oukaQkyNRfgFes0jM4gnceJ2V7xjfh5xR4M3WkPMGd_JSgexHtXMRrZLnGSP0FUI3Ibt1GwPjrTioOKZ30ZQ9ms";
+
+  // API endpoint placeholder - to be filled later
+  const API_ENDPOINT = "";
+
+  // Icons for each staff category
+  const staffIcons = {
+    "Emergency Physicians": "medical_services",
+    Surgeons: "content_cut",
+    "ICU Nurses": "vital_signs",
+    Paramedics: "ambulance",
+    Anesthesiologists: "masks",
+    Radiologists: "radiology",
+    "Lab Technicians": "biotech",
+    "Support Staff": "volunteer_activism",
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminAuth");
+    localStorage.removeItem("userType");
+    localStorage.removeItem("userName");
+    navigate("/", { replace: true });
+  };
+
+  // Load hospital data from JSON based on localStorage ID
+  useEffect(() => {
+    const loadHospitalData = async () => {
+      try {
+        const response = await fetch("/hospitals.json");
+        const data = await response.json();
+        const hospitalId = parseInt(localStorage.getItem("hospitalId")) || 1;
+        const selectedHospital = data.hospitals.find(
+          (h) => h.id === hospitalId,
+        );
+
+        if (!selectedHospital) {
+          setError("Hospital not found");
+        } else {
+          setHospital(selectedHospital);
+          setStaffData(selectedHospital.staffCount || {});
+        }
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    loadHospitalData();
+  }, []);
+
+  const handleIncrement = (category) => {
+    setStaffData((prev) => ({
+      ...prev,
+      [category]: (prev[category] || 0) + 1,
+    }));
+  };
+
+  const handleDecrement = (category) => {
+    setStaffData((prev) => ({
+      ...prev,
+      [category]: Math.max(0, (prev[category] || 0) - 1),
+    }));
+  };
+
+  const handleInputChange = (category, value) => {
+    setStaffData((prev) => ({
+      ...prev,
+      [category]: parseInt(value) || 0,
+    }));
+  };
+
+  const handleUpdateStaff = async () => {
+    // POST to API when endpoint is available
+    if (API_ENDPOINT) {
+      try {
+        await fetch(`${API_ENDPOINT}/hospital/${hospital.id}/staff`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ staffCount: staffData }),
+        });
+        alert("Staffing records updated successfully!");
+      } catch (err) {
+        console.error("Error updating staff:", err);
+        alert("Error updating staffing records");
+      }
+    } else {
+      alert(
+        "Staffing records updated successfully! (API endpoint not configured)",
+      );
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-50">
+        <div className="text-slate-600">Loading hospital data...</div>
+      </div>
+    );
+  }
+
+  if (error || !hospital) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-50">
+        <div className="text-red-600">Error loading hospital data: {error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="Main bg-slate-50 text-slate-900">
       <div className="flex h-screen overflow-hidden">
@@ -9,7 +128,7 @@ function HospitalStaff() {
             </div>
             <div>
               <h1 className="text-primary text-sm font-bold leading-tight">
-                City General
+                {hospital.name}
               </h1>
               <p className="text-slate-500 text-xs font-medium">
                 Emergency Hub
@@ -17,44 +136,40 @@ function HospitalStaff() {
             </div>
           </div>
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <a
+            <Link
+              to="/hospital"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">dashboard</span>
               <span className="text-sm font-medium">Dashboard</span>
-            </a>
-            <a
+            </Link>
+            <Link
+              to="/hospital/inventory"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">inventory_2</span>
               <span className="text-sm font-medium">Inventory</span>
-            </a>
-            <a
+            </Link>
+            <Link
+              to="/hospital/fleet"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">ambulance</span>
               <span className="text-sm font-medium">Fleet Management</span>
-            </a>
-            <a
+            </Link>
+            <Link
+              to="/hospital/staff"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-white shadow-md shadow-primary/20"
-              href="#"
             >
               <span className="material-symbols-outlined">group</span>
               <span className="text-sm font-medium">Staffing</span>
-            </a>
-            <a
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
-            >
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="text-sm font-medium">Alerts</span>
-            </a>
+            </Link>
           </nav>
           <div className="p-4 border-t border-slate-200">
-            <button className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-red-700 hover:bg-red-800 text-white text-sm font-bold shadow-lg shadow-primary/20">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-red-700 text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-red-800 transition-colors"
+            >
               <span className="material-symbols-outlined text-sm">logout</span>
               <span>Logout</span>
             </button>
@@ -66,31 +181,12 @@ function HospitalStaff() {
               <h2 className="text-primary text-lg font-bold">
                 Staffing Management
               </h2>
-              <div className="max-w-md w-full relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                  search
-                </span>
-                <input
-                  className="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary"
-                  placeholder="Search medical personnel..."
-                  type="text"
-                />
-              </div>
             </div>
             <div className="flex items-center gap-4">
-              <button className="p-2 rounded-lg bg-slate-100 text-slate-600">
-                <span className="material-symbols-outlined">translate</span>
-              </button>
-              <button className="p-2 rounded-lg bg-slate-100 text-slate-600 relative">
-                <span className="material-symbols-outlined">notifications</span>
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-              </button>
               <div
                 className="h-8 w-8 rounded-full bg-cover bg-center border border-slate-200"
-                style={{
-                  backgroundImage:
-                    "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAPa58irfqG_HKVD7ZdyXY496Y0YBm0fELjwfyWg-g1MoucvaDahGSYJJQMfuCCutS8IHt17KjpUUr8QcCec2sPCsTsdxYfabtHkgb4QwllUkCjyX41aZB2iCWtmTodtBvOkNW0zU_IUU-kmHI8m2LHITpx2ktHgB65UKQvnmOqtVuyEahb6qjwF7dxAU3pRpZZs9WWy82Bd0DJOQmXhSPB_mJR65DR2ojxqAARv9s3ySjS7EDm_pGo6v4qBgHtJanRQbeQbq_6YOE')",
-                }}
+                style={{ backgroundImage: `url('${userAvatarUrl}')` }}
+                title="User profile avatar"
               ></div>
             </div>
           </header>
@@ -123,261 +219,56 @@ function HospitalStaff() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
-                      <tr className="hover:bg-slate-50">
-                        <td className="px-8 py-5 font-bold text-primary align-middle">
-                          <div className="flex items-center gap-4">
-                            <span className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center">
-                              <span className="material-symbols-outlined text-xl">
-                                medical_services
+                      {Object.entries(staffData).map(([category, count]) => (
+                        <tr key={category} className="hover:bg-slate-50">
+                          <td className="px-8 py-5 font-bold text-primary align-middle">
+                            <div className="flex items-center gap-4">
+                              <span className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center">
+                                <span className="material-symbols-outlined text-xl">
+                                  {staffIcons[category] || "person"}
+                                </span>
                               </span>
-                            </span>
-                            <span className="text-base">
-                              Emergency Physicians
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-5">
-                          <div className="flex items-center max-w-55">
-                            <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                remove
-                              </span>
-                            </button>
-                            <input
-                              className="w-full h-10 text-center border-y border-slate-300 bg-white text-base font-bold text-primary focus:ring-0 focus:border-slate-300"
-                              type="number"
-                              defaultValue="14"
-                            />
-                            <button className="w-10 h-10 flex items-center justify-center rounded-r-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                add
-                              </span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-slate-50">
-                        <td className="px-8 py-5 font-bold text-primary align-middle">
-                          <div className="flex items-center gap-4">
-                            <span className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center">
-                              <span className="material-symbols-outlined text-xl">
-                                content_cut
-                              </span>
-                            </span>
-                            <span className="text-base">Surgeons</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-5">
-                          <div className="flex items-center max-w-55">
-                            <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                remove
-                              </span>
-                            </button>
-                            <input
-                              className="w-full h-10 text-center border-y border-slate-300 bg-white text-base font-bold text-primary focus:ring-0 focus:border-slate-300"
-                              type="number"
-                              defaultValue="8"
-                            />
-                            <button className="w-10 h-10 flex items-center justify-center rounded-r-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                add
-                              </span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-slate-50">
-                        <td className="px-8 py-5 font-bold text-primary align-middle">
-                          <div className="flex items-center gap-4">
-                            <span className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center">
-                              <span className="material-symbols-outlined text-xl">
-                                vital_signs
-                              </span>
-                            </span>
-                            <span className="text-base">ICU Nurses</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-5">
-                          <div className="flex items-center max-w-55">
-                            <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                remove
-                              </span>
-                            </button>
-                            <input
-                              className="w-full h-10 text-center border-y border-slate-300 bg-white text-base font-bold text-primary focus:ring-0 focus:border-slate-300"
-                              type="number"
-                              defaultValue="32"
-                            />
-                            <button className="w-10 h-10 flex items-center justify-center rounded-r-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                add
-                              </span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-slate-50">
-                        <td className="px-8 py-5 font-bold text-primary align-middle">
-                          <div className="flex items-center gap-4">
-                            <span className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center">
-                              <span className="material-symbols-outlined text-xl">
-                                ambulance
-                              </span>
-                            </span>
-                            <span className="text-base">Paramedics</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-5">
-                          <div className="flex items-center max-w-55">
-                            <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                remove
-                              </span>
-                            </button>
-                            <input
-                              className="w-full h-10 text-center border-y border-slate-300 bg-white text-base font-bold text-primary focus:ring-0 focus:border-slate-300"
-                              type="number"
-                              defaultValue="18"
-                            />
-                            <button className="w-10 h-10 flex items-center justify-center rounded-r-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                add
-                              </span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-slate-50">
-                        <td className="px-8 py-5 font-bold text-primary align-middle">
-                          <div className="flex items-center gap-4">
-                            <span className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center">
-                              <span className="material-symbols-outlined text-xl">
-                                masks
-                              </span>
-                            </span>
-                            <span className="text-base">Anesthesiologists</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-5">
-                          <div className="flex items-center max-w-55">
-                            <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                remove
-                              </span>
-                            </button>
-                            <input
-                              className="w-full h-10 text-center border-y border-slate-300 bg-white text-base font-bold text-primary focus:ring-0 focus:border-slate-300"
-                              type="number"
-                              defaultValue="6"
-                            />
-                            <button className="w-10 h-10 flex items-center justify-center rounded-r-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                add
-                              </span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-slate-50">
-                        <td className="px-8 py-5 font-bold text-primary align-middle">
-                          <div className="flex items-center gap-4">
-                            <span className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center">
-                              <span className="material-symbols-outlined text-xl">
-                                radiology
-                              </span>
-                            </span>
-                            <span className="text-base">Radiologists</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-5">
-                          <div className="flex items-center max-w-55">
-                            <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                remove
-                              </span>
-                            </button>
-                            <input
-                              className="w-full h-10 text-center border-y border-slate-300 bg-white text-base font-bold text-primary focus:ring-0 focus:border-slate-300"
-                              type="number"
-                              defaultValue="4"
-                            />
-                            <button className="w-10 h-10 flex items-center justify-center rounded-r-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                add
-                              </span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-slate-50">
-                        <td className="px-8 py-5 font-bold text-primary align-middle">
-                          <div className="flex items-center gap-4">
-                            <span className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center">
-                              <span className="material-symbols-outlined text-xl">
-                                biotech
-                              </span>
-                            </span>
-                            <span className="text-base">Lab Technicians</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-5">
-                          <div className="flex items-center max-w-55">
-                            <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                remove
-                              </span>
-                            </button>
-                            <input
-                              className="w-full h-10 text-center border-y border-slate-300 bg-white text-base font-bold text-primary focus:ring-0 focus:border-slate-300"
-                              type="number"
-                              defaultValue="12"
-                            />
-                            <button className="w-10 h-10 flex items-center justify-center rounded-r-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                add
-                              </span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-slate-50 border-b-0">
-                        <td className="px-8 py-5 font-bold text-primary align-middle">
-                          <div className="flex items-center gap-4">
-                            <span className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center">
-                              <span className="material-symbols-outlined text-xl">
-                                volunteer_activism
-                              </span>
-                            </span>
-                            <span className="text-base">Support Staff</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-5">
-                          <div className="flex items-center max-w-55">
-                            <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                remove
-                              </span>
-                            </button>
-                            <input
-                              className="w-full h-10 text-center border-y border-slate-300 bg-white text-base font-bold text-primary focus:ring-0 focus:border-slate-300"
-                              type="number"
-                              defaultValue="25"
-                            />
-                            <button className="w-10 h-10 flex items-center justify-center rounded-r-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
-                              <span className="material-symbols-outlined">
-                                add
-                              </span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                              <span className="text-base">{category}</span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className="flex items-center max-w-55">
+                              <button
+                                onClick={() => handleDecrement(category)}
+                                className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors"
+                              >
+                                <span className="material-symbols-outlined">
+                                  remove
+                                </span>
+                              </button>
+                              <input
+                                className="w-full h-10 text-center border-y border-slate-300 bg-white text-base font-bold text-primary focus:ring-0 focus:border-slate-300"
+                                type="number"
+                                value={count}
+                                onChange={(e) =>
+                                  handleInputChange(category, e.target.value)
+                                }
+                              />
+                              <button
+                                onClick={() => handleIncrement(category)}
+                                className="w-10 h-10 flex items-center justify-center rounded-r-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors"
+                              >
+                                <span className="material-symbols-outlined">
+                                  add
+                                </span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
                 <div className="px-8 py-8 border-t border-slate-200 bg-white flex flex-col items-center">
-                  <button className="w-full max-w-lg bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-lg transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/25 text-lg">
+                  <button
+                    onClick={handleUpdateStaff}
+                    className="w-full max-w-lg bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-lg transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/25 text-lg"
+                  >
                     <span className="material-symbols-outlined">
                       how_to_reg
                     </span>
