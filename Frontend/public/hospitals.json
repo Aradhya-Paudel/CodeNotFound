@@ -410,6 +410,28 @@
           "progress": 70
         }
       ],
+      "bloodRequests": [
+        {
+          "requestId": "#BR-001",
+          "hospitalName": "St. Mary's Hospital",
+          "bloodType": "O-",
+          "litersNeeded": 50,
+          
+          
+          "distanceMiles": 4.2,
+          "status": "Pending"
+        },
+        {
+          "requestId": "#BR-002",
+          "hospitalName": "Northside Medical Center",
+          "bloodType": "A+",
+          "litersNeeded": 30,
+          
+          
+          "distanceMiles": 6.8,
+          "status": "Pending"
+        }
+      ],
       "icuCapacity": 62,
       "alerts": [
         {

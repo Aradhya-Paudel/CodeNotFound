@@ -137,7 +137,7 @@ function HospitalStaff() {
                           </div>
                         </td>
                         <td className="px-8 py-5">
-                          <div className="flex items-center max-w-[220px]">
+                          <div className="flex items-center max-w-55">
                             <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
                               <span className="material-symbols-outlined">
                                 remove
@@ -168,7 +168,7 @@ function HospitalStaff() {
                           </div>
                         </td>
                         <td className="px-8 py-5">
-                          <div className="flex items-center max-w-[220px]">
+                          <div className="flex items-center max-w-55">
                             <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
                               <span className="material-symbols-outlined">
                                 remove
@@ -199,7 +199,7 @@ function HospitalStaff() {
                           </div>
                         </td>
                         <td className="px-8 py-5">
-                          <div className="flex items-center max-w-[220px]">
+                          <div className="flex items-center max-w-55">
                             <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
                               <span className="material-symbols-outlined">
                                 remove
@@ -230,7 +230,7 @@ function HospitalStaff() {
                           </div>
                         </td>
                         <td className="px-8 py-5">
-                          <div className="flex items-center max-w-[220px]">
+                          <div className="flex items-center max-w-55">
                             <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
                               <span className="material-symbols-outlined">
                                 remove
@@ -261,7 +261,7 @@ function HospitalStaff() {
                           </div>
                         </td>
                         <td className="px-8 py-5">
-                          <div className="flex items-center max-w-[220px]">
+                          <div className="flex items-center max-w-55">
                             <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
                               <span className="material-symbols-outlined">
                                 remove
@@ -292,7 +292,7 @@ function HospitalStaff() {
                           </div>
                         </td>
                         <td className="px-8 py-5">
-                          <div className="flex items-center max-w-[220px]">
+                          <div className="flex items-center max-w-55">
                             <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
                               <span className="material-symbols-outlined">
                                 remove
@@ -323,7 +323,7 @@ function HospitalStaff() {
                           </div>
                         </td>
                         <td className="px-8 py-5">
-                          <div className="flex items-center max-w-[220px]">
+                          <div className="flex items-center max-w-55">
                             <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
                               <span className="material-symbols-outlined">
                                 remove
@@ -354,7 +354,7 @@ function HospitalStaff() {
                           </div>
                         </td>
                         <td className="px-8 py-5">
-                          <div className="flex items-center max-w-[220px]">
+                          <div className="flex items-center max-w-55">
                             <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
                               <span className="material-symbols-outlined">
                                 remove

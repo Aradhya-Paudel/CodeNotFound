@@ -133,7 +133,7 @@ function HospitalFleet() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center w-full max-w-[240px]">
+                    <div className="flex items-center w-full max-w-60">
                       <button className="w-12 h-12 flex items-center justify-center rounded-l-lg bg-white hover:bg-slate-100 border border-slate-300 text-primary font-bold transition-colors">
                         <span className="material-symbols-outlined">
                           remove
@@ -154,33 +154,25 @@ function HospitalFleet() {
               <section>
                 <div className="flex items-center gap-3 mb-6">
                   <span className="material-symbols-outlined text-primary">
-                    move_to_inbox
+                    bloodtype
                   </span>
                   <h3 className="text-xl font-bold text-primary">
-                    Incoming Transfer Requests
+                    Incoming Blood Requests
                   </h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h4 className="font-bold text-primary text-lg">
-                          St. Mary's Hospital
-                        </h4>
-                        <p className="text-slate-500 text-xs font-medium">
-                          Transfer Request • 12 mins ago
-                        </p>
-                      </div>
-                      <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded-full">
-                        URGENT
-                      </span>
+                    <div className="mb-4">
+                      <h4 className="font-bold text-primary text-lg">
+                        St. Mary's Hospital
+                      </h4>
                     </div>
                     <div className="space-y-3 mb-6">
                       <div className="flex items-center gap-3 text-sm text-slate-600">
                         <span className="material-symbols-outlined text-lg">
-                          medical_information
+                          bloodtype
                         </span>
-                        <span>Support for 2 Critical Care Transports</span>
+                        <span>Request for 50 liters of O- Blood</span>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-slate-600">
                         <span className="material-symbols-outlined text-lg">
@@ -199,25 +191,17 @@ function HospitalFleet() {
                     </div>
                   </div>
                   <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h4 className="font-bold text-primary text-lg">
-                          Northside Medical Center
-                        </h4>
-                        <p className="text-slate-500 text-xs font-medium">
-                          Support Request • 28 mins ago
-                        </p>
-                      </div>
-                      <span className="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-full">
-                        ROUTINE
-                      </span>
+                    <div className="mb-4">
+                      <h4 className="font-bold text-primary text-lg">
+                        Northside Medical Center
+                      </h4>
                     </div>
                     <div className="space-y-3 mb-6">
                       <div className="flex items-center gap-3 text-sm text-slate-600">
                         <span className="material-symbols-outlined text-lg">
-                          medical_information
+                          bloodtype
                         </span>
-                        <span>Ambulance Standby (1 unit)</span>
+                        <span>Request for 30 liters of A+ Blood</span>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-slate-600">
                         <span className="material-symbols-outlined text-lg">
