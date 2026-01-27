@@ -68,6 +68,30 @@ const createIncidentIcon = () => {
   });
 };
 
+// Custom hospital icon
+const createHospitalIcon = () => {
+  return new L.DivIcon({
+    className: "hospital-marker",
+    html: `
+      <div style="
+        background: #059669;
+        padding: 8px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <span class="material-symbols-outlined" style="color: white; font-size: 18px;">local_hospital</span>
+      </div>
+    `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+    popupAnchor: [0, -20],
+  });
+};
+
 // Component to handle map center updates
 function MapCenterUpdater({ center }) {
   const map = useMap();
@@ -85,21 +109,51 @@ function Map({
   ambulanceLocation,
   ambulanceName,
   incidents = [],
+  nearestIncident = null,
+  nearestDistance = null,
+  targetHospital = null,
   routePoints = [],
 }) {
   const [route, setRoute] = useState([]);
 
-  // Use ambulance location as center, fallback to Kathmandu
+  // Use ambulance location as center, fallback to Pokhara
   const defaultCenter = ambulanceLocation
     ? [ambulanceLocation.latitude, ambulanceLocation.longitude]
-    : [28.224896, 83.976983]; // Kathmandu fallback
+    : [28.2096, 83.9856]; // Pokhara fallback
 
   console.log("Map Center (defaultCenter):", defaultCenter);
 
-  // Calculate route from ambulance to nearest incident using OSRM
+  // Calculate route from ambulance to target (incident or hospital) using OSRM
   useEffect(() => {
     const calculateRouteWithOSRM = async () => {
-      if (!ambulanceLocation || incidents.length === 0) {
+      if (!ambulanceLocation) {
+        setRoute([]);
+        return;
+      }
+
+      // Determine target: hospital takes priority, then incident
+      let target = null;
+      if (
+        targetHospital &&
+        targetHospital.latitude &&
+        targetHospital.longitude
+      ) {
+        target = {
+          latitude: targetHospital.latitude,
+          longitude: targetHospital.longitude,
+        };
+      } else if (
+        nearestIncident &&
+        nearestIncident.latitude &&
+        nearestIncident.longitude
+      ) {
+        target = {
+          latitude: nearestIncident.latitude,
+          longitude: nearestIncident.longitude,
+        };
+      }
+
+      if (!target) {
         setRoute([]);
         return;
       }
@@ -109,36 +163,14 @@ function Map({
         ambulanceLocation.latitude,
       ];
 
-      // Find nearest incident
-      let nearestIncident = null;
-      let minDistance = Infinity;
-
-      incidents.forEach((incident) => {
-        if (incident.latitude && incident.longitude) {
-          const distance = Math.sqrt(
-            Math.pow(incident.latitude - ambulanceLocation.latitude, 2) +
-              Math.pow(incident.longitude - ambulanceLocation.longitude, 2),
-          );
-          if (distance < minDistance) {
-            minDistance = distance;
-            nearestIncident = incident;
-          }
-        }
-      });
-
-      if (!nearestIncident) {
-        setRoute([]);
-        return;
-      }
-
-      const incidentPos = [
-        nearestIncident.longitude, // OSRM uses [lng, lat]
-        nearestIncident.latitude,
+      const targetPos = [
+        target.longitude, // OSRM uses [lng, lat]
+        target.latitude,
       ];
 
       try {
         // Use OSRM public API for routing
-        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${ambulancePos[0]},${ambulancePos[1]};${incidentPos[0]},${incidentPos[1]}?overview=full&geometries=geojson`;
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${ambulancePos[0]},${ambulancePos[1]};${targetPos[0]},${targetPos[1]}?overview=full&geometries=geojson`;
 
         const response = await fetch(osrmUrl);
         const data = await response.json();
@@ -156,13 +188,13 @@ function Map({
         // Fallback to straight line if OSRM fails
         setRoute([
           [ambulanceLocation.latitude, ambulanceLocation.longitude],
-          [nearestIncident.latitude, nearestIncident.longitude],
+          [target.latitude, target.longitude],
         ]);
       }
     };
 
     calculateRouteWithOSRM();
-  }, [ambulanceLocation, incidents]);
+  }, [ambulanceLocation, nearestIncident, targetHospital]);
 
   const mapCenter = ambulanceLocation
     ? [ambulanceLocation.latitude, ambulanceLocation.longitude]
@@ -265,13 +297,82 @@ function Map({
           <Polyline
             positions={route}
             pathOptions={{
-              color: "#1e40af",
+              color: targetHospital ? "#059669" : "#1e40af",
               weight: 4,
               opacity: 0.8,
               dashArray: "10, 10",
             }}
           />
         )}
+
+        {/* Target Hospital Marker */}
+        {targetHospital &&
+          targetHospital.latitude &&
+          targetHospital.longitude && (
+            <Marker
+              position={[targetHospital.latitude, targetHospital.longitude]}
+              icon={createHospitalIcon()}
+            >
+              <Popup>
+                <div style={{ padding: "4px", minWidth: "180px" }}>
+                  <strong style={{ color: "#059669" }}>
+                    🏥 {targetHospital.name || "Hospital"}
+                  </strong>
+                  <br />
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      color: "#666",
+                      marginTop: "4px",
+                      display: "block",
+                    }}
+                  >
+                    📍 {targetHospital.address || "Unknown address"}
+                    <br />
+                    📞 {targetHospital.phone || "N/A"}
+                    <br />
+                    🛏️ Beds:{" "}
+                    <strong>{targetHospital.bedsAvailable || "N/A"}</strong>
+                  </span>
+                </div>
+              </Popup>
+            </Marker>
+          )}
+
+        {/* Nearest Incident Marker (when navigating to it) */}
+        {nearestIncident &&
+          nearestIncident.latitude &&
+          nearestIncident.longitude &&
+          !targetHospital && (
+            <Marker
+              position={[nearestIncident.latitude, nearestIncident.longitude]}
+              icon={createIncidentIcon()}
+            >
+              <Popup>
+                <div style={{ padding: "4px", minWidth: "180px" }}>
+                  <strong style={{ color: "#dc2626" }}>
+                    🚨 {nearestIncident.title || "Incident"}
+                  </strong>
+                  <br />
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      color: "#666",
+                      marginTop: "4px",
+                      display: "block",
+                    }}
+                  >
+                    📍 {nearestIncident.location || "Unknown location"}
+                    <br />
+                    🕐 {nearestIncident.time || "Unknown time"}
+                    <br />
+                    Status:{" "}
+                    <strong>{nearestIncident.status || "PENDING"}</strong>
+                  </span>
+                </div>
+              </Popup>
+            </Marker>
+          )}
       </MapContainer>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Map from "../components/Map";
 
@@ -10,8 +10,22 @@ function AmbulanceUser() {
   const [location, setLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const [locationStatus, setLocationStatus] = useState("idle"); // idle, requesting, active
+  const [nearestIncident, setNearestIncident] = useState(null);
+  const [nearestDistance, setNearestDistance] = useState(null);
+
+  // New states for ambulance workflow
+  const [ambulanceStatus, setAmbulanceStatus] = useState("active"); // active, busy
+  const [currentIncident, setCurrentIncident] = useState(null);
+  const [showCasualtyPopup, setShowCasualtyPopup] = useState(false);
+  const [casualtyCount, setCasualtyCount] = useState(0);
+  const [casualties, setCasualties] = useState([]);
+  const [hospitals, setHospitals] = useState([]);
+  const [nearestHospital, setNearestHospital] = useState(null);
+  const [isNavigatingToHospital, setIsNavigatingToHospital] = useState(false);
+  const [distanceInMeters, setDistanceInMeters] = useState(null);
 
   const API_ENDPOINT = ""; // Empty for now, will be configured later
+  const PROXIMITY_THRESHOLD = 5; // 5 meters
 
   useEffect(() => {
     const userName = localStorage.getItem("userName");
@@ -30,9 +44,112 @@ function AmbulanceUser() {
       .then((data) => setIncidents(data.submissions))
       .catch((error) => console.error("Error loading incidents:", error));
 
+    // Fetch hospitals data
+    fetch("/hospitals.json")
+      .then((res) => res.json())
+      .then((data) => setHospitals(data.hospitals))
+      .catch((error) => console.error("Error loading hospitals:", error));
+
     // Request location permission and start tracking
     requestLocationPermission();
   }, [navigate]);
+
+  // Calculate distance in meters using Haversine formula
+  const calculateDistanceMeters = useCallback((lat1, lon1, lat2, lon2) => {
+    const R = 6371000; // Earth's radius in meters
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }, []);
+
+  // Calculate nearest incident whenever location or incidents change (only if active)
+  useEffect(() => {
+    if (!location || incidents.length === 0 || ambulanceStatus === "busy") {
+      if (ambulanceStatus === "busy") return; // Don't clear if busy
+      setNearestIncident(null);
+      setNearestDistance(null);
+      setDistanceInMeters(null);
+      return;
+    }
+
+    let nearest = null;
+    let minDistance = Infinity;
+
+    incidents.forEach((incident) => {
+      if (incident.latitude && incident.longitude) {
+        const distance = calculateDistanceMeters(
+          location.latitude,
+          location.longitude,
+          incident.latitude,
+          incident.longitude,
+        );
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearest = incident;
+        }
+      }
+    });
+
+    setNearestIncident(nearest);
+    setNearestDistance(minDistance / 111000); // Convert back to degrees for map
+    setDistanceInMeters(minDistance);
+  }, [location, incidents, ambulanceStatus, calculateDistanceMeters]);
+
+  // Calculate distance to current incident when busy
+  useEffect(() => {
+    if (
+      ambulanceStatus === "busy" &&
+      currentIncident &&
+      location &&
+      !isNavigatingToHospital
+    ) {
+      const distance = calculateDistanceMeters(
+        location.latitude,
+        location.longitude,
+        currentIncident.latitude,
+        currentIncident.longitude,
+      );
+      setDistanceInMeters(distance);
+    }
+  }, [
+    location,
+    currentIncident,
+    ambulanceStatus,
+    isNavigatingToHospital,
+    calculateDistanceMeters,
+  ]);
+
+  // Find nearest hospital
+  const findNearestHospital = useCallback(() => {
+    if (!location || hospitals.length === 0) return null;
+
+    let nearest = null;
+    let minDistance = Infinity;
+
+    hospitals.forEach((hospital) => {
+      if (hospital.latitude && hospital.longitude) {
+        const distance = calculateDistanceMeters(
+          location.latitude,
+          location.longitude,
+          hospital.latitude,
+          hospital.longitude,
+        );
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearest = hospital;
+        }
+      }
+    });
+
+    return nearest;
+  }, [location, hospitals, calculateDistanceMeters]);
 
   const requestLocationPermission = async () => {
     setLocationStatus("requesting");
@@ -115,6 +232,116 @@ function AmbulanceUser() {
     }
   };
 
+  // Accept incident and change status to busy
+  const handleAcceptIncident = () => {
+    if (nearestIncident) {
+      setAmbulanceStatus("busy");
+      setCurrentIncident(nearestIncident);
+
+      // Post status to backend
+      if (API_ENDPOINT) {
+        fetch(`${API_ENDPOINT}/ambulance-status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ambulanceName: user,
+            status: "busy",
+            incidentId: nearestIncident.id,
+          }),
+        }).catch(console.error);
+      }
+    }
+  };
+
+  // Handle when ambulance reaches incident location
+  const handleReachedIncident = () => {
+    setShowCasualtyPopup(true);
+    setCasualtyCount(0);
+    setCasualties([]);
+  };
+
+  // Handle casualty count change
+  const handleCasualtyCountChange = (count) => {
+    const num = parseInt(count) || 0;
+    setCasualtyCount(num);
+    setCasualties(
+      Array(num)
+        .fill(null)
+        .map((_, i) => ({
+          id: i + 1,
+          bloodType: "",
+          requiredAmount: "",
+          severity: "",
+          specialtyRequired: "",
+        })),
+    );
+  };
+
+  // Update individual casualty data
+  const updateCasualtyData = (index, field, value) => {
+    setCasualties((prev) =>
+      prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)),
+    );
+  };
+
+  // Submit casualty data and navigate to hospital
+  const handleSubmitCasualties = async () => {
+    // Post casualty data to backend
+    if (API_ENDPOINT) {
+      try {
+        await fetch(`${API_ENDPOINT}/casualties`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            incidentId: currentIncident?.id,
+            ambulanceName: user,
+            casualties: casualties,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      } catch (error) {
+        console.error("Error posting casualties:", error);
+      }
+    } else {
+      console.log("Casualty data:", {
+        incidentId: currentIncident?.id,
+        casualties,
+      });
+    }
+
+    // Find nearest hospital and start navigation
+    const hospital = findNearestHospital();
+    setNearestHospital(hospital);
+    setIsNavigatingToHospital(true);
+    setShowCasualtyPopup(false);
+  };
+
+  // Handle when ambulance reaches hospital
+  const handleReachedHospital = () => {
+    setAmbulanceStatus("active");
+    setCurrentIncident(null);
+    setIsNavigatingToHospital(false);
+    setNearestHospital(null);
+    setCasualties([]);
+    setCasualtyCount(0);
+
+    // Post status to backend
+    if (API_ENDPOINT) {
+      fetch(`${API_ENDPOINT}/ambulance-status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ambulanceName: user, status: "active" }),
+      }).catch(console.error);
+    }
+  };
+
+  // Check if within 5 meters of current incident
+  const isWithinProximity =
+    ambulanceStatus === "busy" &&
+    currentIncident &&
+    distanceInMeters !== null &&
+    distanceInMeters <= PROXIMITY_THRESHOLD;
+
   const handleLogout = () => {
     localStorage.removeItem("adminAuth");
     localStorage.removeItem("userType");
@@ -135,6 +362,16 @@ function AmbulanceUser() {
             <span className="font-bold text-primary tracking-tight text-xs md:text-base">
               EMS Response System
             </span>
+            {/* Ambulance Status Badge */}
+            <div
+              className={`ml-4 px-3 py-1 rounded-full text-xs font-bold ${
+                ambulanceStatus === "active"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-orange-100 text-orange-700"
+              }`}
+            >
+              {ambulanceStatus === "active" ? "ACTIVE" : "BUSY"}
+            </div>
           </div>
           <div className="flex items-center gap-2 md:gap-6">
             {/* Location Status Indicator */}
@@ -165,10 +402,22 @@ function AmbulanceUser() {
               </div>
             )}
 
-            <button className="bg-primary text-white hover:bg-slate-800 px-3 md:px-6 py-2 rounded-lg font-bold flex items-center gap-1 md:gap-2 transition-all active:scale-95 text-xs md:text-sm">
-              <span className="material-symbols-outlined text-lg">call</span>
-              <span className="hidden sm:inline">Got a Call?</span>
-            </button>
+            {/* Got a Call Button - Manual casualty entry without map navigation */}
+            {ambulanceStatus === "active" && (
+              <button
+                onClick={() => {
+                  setAmbulanceStatus("busy");
+                  setShowCasualtyPopup(true);
+                  setCasualtyCount(0);
+                  setCasualties([]);
+                }}
+                className="bg-primary text-white hover:bg-slate-800 px-3 md:px-6 py-2 rounded-lg font-bold flex items-center gap-1 md:gap-2 transition-all active:scale-95 text-xs md:text-sm"
+              >
+                <span className="material-symbols-outlined text-lg">call</span>
+                <span className="hidden sm:inline">Got a Call?</span>
+              </button>
+            )}
+
             <button
               onClick={handleLogout}
               className="bg-red-700 text-white hover:bg-red-800 px-3 md:px-6 py-2 rounded-lg font-bold flex items-center gap-1 md:gap-2 transition-all active:scale-95 text-xs md:text-sm"
@@ -198,8 +447,216 @@ function AmbulanceUser() {
             </div>
           </div>
         </header>
+
+        {/* Casualty Data Entry Popup */}
+        {showCasualtyPopup && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-slate-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-primary">
+                      Casualty Data Entry
+                    </h2>
+                    <p className="text-sm text-slate-500 mt-1">
+                      Enter details for each casualty
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowCasualtyPopup(false)}
+                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+              </div>
+              <div className="p-6">
+                {/* Casualty Count Input */}
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Number of Casualties
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={casualtyCount}
+                    onChange={(e) => handleCasualtyCountChange(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Enter number of casualties"
+                  />
+                </div>
+
+                {/* Casualty Cards */}
+                {casualties.length > 0 && (
+                  <div className="space-y-4">
+                    {casualties.map((casualty, index) => (
+                      <div
+                        key={casualty.id}
+                        className="bg-slate-50 rounded-xl p-4 border border-slate-200"
+                      >
+                        <h3 className="font-bold text-primary mb-3">
+                          Casualty #{casualty.id}
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">
+                              Blood Type
+                            </label>
+                            <select
+                              value={casualty.bloodType}
+                              onChange={(e) =>
+                                updateCasualtyData(
+                                  index,
+                                  "bloodType",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                            >
+                              <option value="">Select</option>
+                              <option value="A+">A+</option>
+                              <option value="A-">A-</option>
+                              <option value="B+">B+</option>
+                              <option value="B-">B-</option>
+                              <option value="O+">O+</option>
+                              <option value="O-">O-</option>
+                              <option value="AB+">AB+</option>
+                              <option value="AB-">AB-</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">
+                              Required Amount (L)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={casualty.requiredAmount}
+                              onChange={(e) =>
+                                updateCasualtyData(
+                                  index,
+                                  "requiredAmount",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                              placeholder="Liters"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">
+                              Severity
+                            </label>
+                            <select
+                              value={casualty.severity}
+                              onChange={(e) =>
+                                updateCasualtyData(
+                                  index,
+                                  "severity",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                            >
+                              <option value="">Select</option>
+                              <option value="Critical">Critical</option>
+                              <option value="Severe">Severe</option>
+                              <option value="Moderate">Moderate</option>
+                              <option value="Minor">Minor</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">
+                              Specialty Required
+                            </label>
+                            <select
+                              value={casualty.specialtyRequired}
+                              onChange={(e) =>
+                                updateCasualtyData(
+                                  index,
+                                  "specialtyRequired",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+                            >
+                              <option value="">Select</option>
+                              <option value="Cardiologist">Cardiologist</option>
+                              <option value="Neurologist">Neurologist</option>
+                              <option value="Orthopedic Surgeon">
+                                Orthopedic Surgeon
+                              </option>
+                              <option value="General Surgeon">
+                                General Surgeon
+                              </option>
+                              <option value="Trauma Surgeon">
+                                Trauma Surgeon
+                              </option>
+                              <option value="Anesthesiologist">
+                                Anesthesiologist
+                              </option>
+                              <option value="Emergency Medicine">
+                                Emergency Medicine
+                              </option>
+                              <option value="Pulmonologist">
+                                Pulmonologist
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                {casualties.length > 0 && (
+                  <button
+                    onClick={handleSubmitCasualties}
+                    className="w-full mt-6 bg-primary text-white py-3 rounded-lg font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined">
+                      local_hospital
+                    </span>
+                    Submit & Navigate to Hospital
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hospital Navigation Banner */}
+        {isNavigatingToHospital && nearestHospital && (
+          <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined animate-pulse">
+                local_hospital
+              </span>
+              <div>
+                <p className="font-bold">
+                  Navigating to {nearestHospital.name}
+                </p>
+                <p className="text-xs text-blue-200">
+                  {nearestHospital.address}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleReachedHospital}
+              className="bg-white text-blue-600 px-4 py-2 rounded-lg font-bold hover:bg-blue-50 transition-colors flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined">check_circle</span>
+              Reached Hospital
+            </button>
+          </div>
+        )}
+
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-          {incidents.length > 0 ? (
+          {/* Show sidebar based on ambulance status */}
+          {ambulanceStatus === "active" && nearestIncident ? (
             <aside className="w-80 bg-white border-r border-slate-200 flex flex-col h-full shadow-lg z-10">
               <div className="p-6 border-b border-slate-100">
                 <div className="flex items-center gap-3">
@@ -207,47 +664,128 @@ function AmbulanceUser() {
                     emergency_home
                   </span>
                   <h2 className="text-primary font-bold text-lg">
-                    Active Incidents
+                    Nearest Incident
                   </h2>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">
-                  Live Dispatch Feed
+                  Priority Response
                 </p>
               </div>
               <div className="p-4 flex-1 overflow-y-auto">
-                {incidents.map((incident) => (
+                <div className="w-full mb-4 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/50 p-4">
+                  <div className="relative h-32 w-full rounded-lg overflow-hidden mb-3">
+                    <img
+                      alt={nearestIncident.title}
+                      className="w-full h-full object-cover grayscale-[0.3]"
+                      src={nearestIncident.image}
+                    />
+                  </div>
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-sm font-bold text-primary">
+                      {nearestIncident.title}
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-600 mb-2">
+                    <span className="material-symbols-outlined text-lg text-primary">
+                      location_on
+                    </span>
+                    <span className="text-xs font-semibold">
+                      {nearestIncident.location}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] mb-3">
+                    <span className="text-slate-500">
+                      {nearestIncident.time}
+                    </span>
+                    <span className="font-bold text-slate-600">
+                      {nearestIncident.status}
+                    </span>
+                  </div>
+                  <div className="bg-linear-to-r from-blue-50 to-blue-100 rounded-lg p-2 flex items-center justify-between mb-4">
+                    <span className="text-xs font-semibold text-blue-900">
+                      Distance:
+                    </span>
+                    <span className="text-sm font-bold text-blue-600">
+                      {distanceInMeters
+                        ? `${distanceInMeters.toFixed(0)}m`
+                        : "Calculating..."}
+                    </span>
+                  </div>
                   <button
-                    key={incident.id}
-                    className="w-full mb-4 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/50 p-4 hover:bg-slate-50 hover:shadow-2xl transition-all active:scale-95 text-left"
+                    onClick={handleAcceptIncident}
+                    className="w-full bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
                   >
-                    <div className="relative h-32 w-full rounded-lg overflow-hidden mb-3">
-                      <img
-                        alt={incident.title}
-                        className="w-full h-full object-cover grayscale-[0.3]"
-                        src={incident.image}
-                      />
-                    </div>
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-sm font-bold text-primary">
-                        {incident.title}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-600 mb-2">
-                      <span className="material-symbols-outlined text-lg text-primary">
-                        location_on
-                      </span>
-                      <span className="text-xs font-semibold">
-                        {incident.location}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-slate-500">{incident.time}</span>
-                      <span className="font-bold text-slate-600">
-                        {incident.status}
-                      </span>
-                    </div>
+                    <span className="material-symbols-outlined">
+                      directions
+                    </span>
+                    Accept & Navigate
                   </button>
-                ))}
+                </div>
+              </div>
+            </aside>
+          ) : ambulanceStatus === "busy" &&
+            currentIncident &&
+            !isNavigatingToHospital ? (
+            <aside className="w-80 bg-white border-r border-slate-200 flex flex-col h-full shadow-lg z-10">
+              <div className="p-6 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-orange-600 animate-pulse">
+                    directions_car
+                  </span>
+                  <h2 className="text-primary font-bold text-lg">En Route</h2>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">
+                  Responding to Incident
+                </p>
+              </div>
+              <div className="p-4 flex-1 overflow-y-auto">
+                <div className="w-full mb-4 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-orange-200 p-4">
+                  <div className="relative h-32 w-full rounded-lg overflow-hidden mb-3">
+                    <img
+                      alt={currentIncident.title}
+                      className="w-full h-full object-cover"
+                      src={currentIncident.image}
+                    />
+                  </div>
+                  <h3 className="text-sm font-bold text-primary mb-2">
+                    {currentIncident.title}
+                  </h3>
+                  <div className="flex items-center gap-2 text-slate-600 mb-2">
+                    <span className="material-symbols-outlined text-lg text-primary">
+                      location_on
+                    </span>
+                    <span className="text-xs font-semibold">
+                      {currentIncident.location}
+                    </span>
+                  </div>
+                  <div className="bg-linear-to-r from-orange-50 to-orange-100 rounded-lg p-3 flex items-center justify-between mb-4">
+                    <span className="text-xs font-semibold text-orange-900">
+                      Distance:
+                    </span>
+                    <span className="text-lg font-bold text-orange-600">
+                      {distanceInMeters
+                        ? `${distanceInMeters.toFixed(0)}m`
+                        : "Calculating..."}
+                    </span>
+                  </div>
+
+                  {/* Reached Button - shows when within 5 meters */}
+                  {isWithinProximity ? (
+                    <button
+                      onClick={handleReachedIncident}
+                      className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 animate-pulse"
+                    >
+                      <span className="material-symbols-outlined">
+                        check_circle
+                      </span>
+                      Reached?
+                    </button>
+                  ) : (
+                    <div className="w-full bg-slate-100 text-slate-500 py-3 rounded-lg font-semibold text-center text-sm">
+                      Get within 5m to confirm arrival
+                    </div>
+                  )}
+                </div>
               </div>
             </aside>
           ) : (
@@ -265,10 +803,14 @@ function AmbulanceUser() {
                     check_circle
                   </span>
                   <p className="text-primary font-semibold text-center text-base">
-                    No accidents nearby
+                    {isNavigatingToHospital
+                      ? "Navigating to Hospital"
+                      : "No accidents nearby"}
                   </p>
                   <p className="text-slate-400 text-[11px] text-center mt-2 uppercase tracking-widest font-medium">
-                    Scanning Area 4-B
+                    {ambulanceStatus === "active"
+                      ? "Scanning Area"
+                      : "In Transit"}
                   </p>
                 </div>
               </div>
@@ -278,7 +820,12 @@ function AmbulanceUser() {
             <Map
               ambulanceLocation={location}
               ambulanceName={user}
-              incidents={incidents}
+              incidents={ambulanceStatus === "active" ? incidents : []}
+              nearestIncident={
+                ambulanceStatus === "busy" ? currentIncident : nearestIncident
+              }
+              nearestDistance={nearestDistance}
+              targetHospital={isNavigatingToHospital ? nearestHospital : null}
             />
           </main>
         </div>
