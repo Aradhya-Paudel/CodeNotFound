@@ -119,4 +119,36 @@ router.get('/hospitals/:id/doctors', async (req, res) => {
 });
 
 
+// GET /api/hospital/:id/incoming
+// Get incoming ambulances/incidents for a specific hospital
+router.get('/hospital/:id/incoming', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { data, error } = await supabase
+            .from('incidents')
+            .select(`
+                *,
+                ambulances (
+                    plate_number,
+                    driver_id,
+                    current_location
+                )
+            `)
+            .eq('destination_hospital_id', id)
+            .in('status', ['picked_up', 'assigned']) // Only show active missions
+            .neq('status', 'resolved')
+            .neq('status', 'cancelled');
+
+        if (error) throw error;
+
+        // enrich with ETA estimation if needed (simple distance calc)
+        // For now return raw data
+        res.json(data);
+    } catch (err) {
+        console.error(`Error fetching incoming incidents for hospital ${id}:`, err.message);
+        res.status(500).json({ error: 'Failed to fetch incoming incidents', code: "INTERNAL_SERVER_ERROR" });
+    }
+});
+
 module.exports = router;

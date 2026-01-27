@@ -222,6 +222,14 @@ function AmbulanceUser() {
         setRouteGeometry(bestMatch.route_geometry); // For Map to draw line
         setIsNavigatingToHospital(true);
         setShowCasualtyPopup(false);
+
+        // Notify Backend of Destination
+        if (currentIncident && currentIncident.id) {
+          await api.patch(`/incidents/${currentIncident.id}`, {
+            destination_hospital_id: bestMatch.id,
+            status: 'assigned' // or 'picked_up' depending on flow
+          }).catch(err => console.error("Failed to update incident destination", err));
+        }
       } else {
         alert("No hospitals found nearby!");
       }

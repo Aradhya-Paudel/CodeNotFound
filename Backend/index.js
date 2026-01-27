@@ -39,9 +39,11 @@ const logger = require('./utils/logger'); // Will create this soon, but let's pr
 
 // Routes
 app.use('/api', require('./routes/match'));
+const incidentsRoutes = require('./routes/incidents');
 app.use('/api', require('./routes/map'));
 app.use('/api', hospitalRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/incidents', incidentsRoutes); // New route
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/ambulance', require('./routes/ambulance'));
 
