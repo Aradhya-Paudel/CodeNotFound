@@ -1,0 +1,44 @@
+{
+  "ambulances": [
+    {
+      "name": "MH-02-AB-0001",
+      "password": "ambulance@123"
+    },
+    {
+      "name": "MH-02-AB-0002",
+      "password": "ambu2024pass"
+    },
+    {
+      "name": "MH-02-AB-0003",
+      "password": "emerg@ncy99"
+    },
+    {
+      "name": "MH-02-AB-0004",
+      "password": "rescue2024"
+    },
+    {
+      "name": "MH-02-AB-0005",
+      "password": "response123"
+    },
+    {
+      "name": "MH-02-AB-0006",
+      "password": "medic@rescue"
+    },
+    {
+      "name": "MH-02-AB-0007",
+      "password": "help911pass"
+    },
+    {
+      "name": "MH-02-AB-0008",
+      "password": "quickhelp88"
+    },
+    {
+      "name": "MH-02-AB-0009",
+      "password": "rapid1response"
+    },
+    {
+      "name": "MH-02-AB-0010",
+      "password": "service2024@"
+    }
+  ]
+}
