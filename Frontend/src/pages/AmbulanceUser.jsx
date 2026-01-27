@@ -463,7 +463,10 @@ function AmbulanceUser() {
                     </p>
                   </div>
                   <button
-                    onClick={() => setShowCasualtyPopup(false)}
+                    onClick={() => {
+                      setShowCasualtyPopup(false);
+                      setAmbulanceStatus("active");
+                    }}
                     className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
                   >
                     <span className="material-symbols-outlined">close</span>
@@ -484,6 +487,7 @@ function AmbulanceUser() {
                     onChange={(e) => handleCasualtyCountChange(e.target.value)}
                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="Enter number of casualties"
+                    
                   />
                 </div>
 
@@ -504,6 +508,7 @@ function AmbulanceUser() {
                               Blood Type
                             </label>
                             <select
+                              required
                               value={casualty.bloodType}
                               onChange={(e) =>
                                 updateCasualtyData(
@@ -530,6 +535,7 @@ function AmbulanceUser() {
                               Required Amount (L)
                             </label>
                             <input
+                              required
                               type="number"
                               step="0.1"
                               min="0"
@@ -550,6 +556,7 @@ function AmbulanceUser() {
                               Severity
                             </label>
                             <select
+                              required
                               value={casualty.severity}
                               onChange={(e) =>
                                 updateCasualtyData(
@@ -572,6 +579,7 @@ function AmbulanceUser() {
                               Specialty Required
                             </label>
                             <select
+                              required
                               value={casualty.specialtyRequired}
                               onChange={(e) =>
                                 updateCasualtyData(
