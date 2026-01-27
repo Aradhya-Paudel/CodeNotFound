@@ -28,6 +28,17 @@ app.get('/health', async (req, res) => {
     }
 });
 
+// Root Route
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Hospital Resource Backend is Running',
+        endpoints: {
+            health: '/health',
+            match: '/api/match'
+        }
+    });
+});
+
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error('Unhandled Error:', err.stack);
