@@ -6,6 +6,7 @@ import IsAuthenticated from "./Hooks/isAuthenticated";
 import HospitalDashboard from "./pages/hospitals/HospitalDashboard";
 import HospitalInventory from "./pages/hospitals/HospitalInventory";
 import GuestUser from "./pages/GuestUser";
+import HospitalStaff from "./pages/hospitals/HospitalStaff";
 
 const router = createBrowserRouter([
   {
@@ -35,7 +36,17 @@ const router = createBrowserRouter([
         <HospitalInventory />
       </IsAuthenticated>
     ),
+    
+  }, {
+    path: "/hospital/staff",
+    element: (
+      <IsAuthenticated>
+        <HospitalStaff />
+        </IsAuthenticated>
+    ),
   },
+  {
+  }
 ]);
 
 function App() {

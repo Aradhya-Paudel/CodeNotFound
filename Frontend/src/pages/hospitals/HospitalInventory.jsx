@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 function HospitalInventory() {
   const navigate = useNavigate();
@@ -18,14 +18,18 @@ function HospitalInventory() {
     navigate("/", { replace: true });
   };
 
-  // Load hospital data and inventory from hospitals.json
+  // Load hospital data from JSON based on localStorage ID
   useEffect(() => {
     const loadHospitalData = async () => {
       try {
         const response = await fetch("/hospitals.json");
         const data = await response.json();
-        // Extract first hospital from the data
-        const selectedHospital = data.hospitals[0];
+        // Get hospital ID from localStorage
+        const hospitalId =
+          localStorage.getItem("hospitalId") || data.hospitals[0].id;
+        const selectedHospital = data.hospitals.find(
+          (h) => h.id === hospitalId,
+        );
 
         if (!selectedHospital) {
           setError("Hospital not found");
@@ -52,6 +56,20 @@ function HospitalInventory() {
     setInventoryData({
       ...inventoryData,
       [bloodType]: parseInt(value, 10) || 0,
+    });
+  };
+
+  const handleIncrement = (bloodType) => {
+    setInventoryData({
+      ...inventoryData,
+      [bloodType]: (inventoryData[bloodType] || 0) + 1,
+    });
+  };
+
+  const handleDecrement = (bloodType) => {
+    setInventoryData({
+      ...inventoryData,
+      [bloodType]: Math.max(0, (inventoryData[bloodType] || 0) - 1),
     });
   };
 
@@ -94,20 +112,17 @@ function HospitalInventory() {
             </div>
           </div>
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <a
+            <Link
+              to="/hospital"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
-              href="#"
             >
               <span className="material-symbols-outlined">dashboard</span>
               <span className="text-sm font-medium">Dashboard</span>
-            </a>
-            <a
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-white"
-              href="#"
-            >
+            </Link>
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-white">
               <span className="material-symbols-outlined">inventory_2</span>
               <span className="text-sm font-medium">Inventory</span>
-            </a>
+            </div>
             <a
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100"
               href="#"
@@ -199,7 +214,10 @@ function HospitalInventory() {
                             </td>
                             <td className="px-8 py-5">
                               <div className="flex items-center max-w-55">
-                                <button className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-bold transition-colors">
+                                <button
+                                  onClick={() => handleDecrement(blood.type)}
+                                  className="w-10 h-10 flex items-center justify-center rounded-l-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-bold transition-colors"
+                                >
                                   <span className="material-symbols-outlined">
                                     remove
                                   </span>
@@ -215,7 +233,10 @@ function HospitalInventory() {
                                     )
                                   }
                                 />
-                                <button className="w-10 h-10 flex items-center justify-center rounded-r-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-bold transition-colors">
+                                <button
+                                  onClick={() => handleIncrement(blood.type)}
+                                  className="w-10 h-10 flex items-center justify-center rounded-r-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-bold transition-colors"
+                                >
                                   <span className="material-symbols-outlined">
                                     add
                                   </span>

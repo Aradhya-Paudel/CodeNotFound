@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 function HospitalDashboard() {
-  const { id } = useParams();
   const navigate = useNavigate();
   const [hospital, setHospital] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,14 +17,15 @@ function HospitalDashboard() {
     navigate("/", { replace: true });
   };
 
-  // Load hospital data from JSON based on ID
+  // Load hospital data from JSON based on localStorage ID
   useEffect(() => {
     const loadHospitalData = async () => {
       try {
         const response = await fetch("/hospitals.json");
         const data = await response.json();
-        // Find hospital by ID from URL params
-        const hospitalId = id || data.hospitals[0].id; // Default to first hospital if no ID provided
+        // Get hospital ID from localStorage
+        const hospitalId =
+          localStorage.getItem("hospitalId") || data.hospitals[0].id;
         const selectedHospital = data.hospitals.find(
           (h) => h.id === hospitalId,
         );
@@ -43,7 +43,7 @@ function HospitalDashboard() {
     };
 
     loadHospitalData();
-  }, [id]);
+  }, []);
 
   if (loading) {
     return (
