@@ -166,5 +166,40 @@ router.get('/hospital/:id/status', async (req, res) => {
     }
 });
 
+// GET /api/hospitals/:id
+router.get('/hospitals/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { data, error } = await supabase
+            .from('hospitals')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error || !data) {
+            return res.status(404).json({ error: "Hospital not found", code: "NOT_FOUND" });
+        }
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch hospital" });
+    }
+});
+
+// GET /api/hospitals/:id/doctors
+router.get('/hospitals/:id/doctors', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { data, error } = await supabase
+            .from('doctors')
+            .select('*')
+            .eq('hospital_id', id);
+
+        if (error) throw error;
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch doctors" });
+    }
+});
+
 
 module.exports = router;

@@ -33,12 +33,17 @@ app.get('/health', async (req, res) => {
     }
 });
 
-<<<<<<< HEAD
-=======
+const hospitalRoutes = require('./routes/hospital');
+const authRoutes = require('./routes/auth');
+const logger = require('./utils/logger'); // Will create this soon, but let's prep
+
 // Routes
 app.use('/api', require('./routes/match'));
 app.use('/api', require('./routes/map'));
-app.use('/api', require('./routes/hospital'));
+app.use('/api', hospitalRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/ambulance', require('./routes/ambulance'));
 
 // Summary Endpoint (Legacy support if needed, but sticking to new routes)
 app.get('/api/hospitals', async (req, res) => {
@@ -52,21 +57,17 @@ app.get('/api/hospitals', async (req, res) => {
     }
 });
 
->>>>>>> f12f936 (Auto-sync on project open)
 // Root Route
 app.get('/', (req, res) => {
     res.json({
         message: 'Hospital Resource Backend is Running',
         endpoints: {
             health: '/health',
-<<<<<<< HEAD
-            match: '/api/match'
-=======
             hospitals: '/api/hospitals',
             hospitalsMap: '/api/hospitals/map',
             match: '/api/match',
-            geocode: '/api/geocode'
->>>>>>> f12f936 (Auto-sync on project open)
+            geocode: '/api/geocode',
+            auth: '/api/auth'
         }
     });
 });
@@ -81,9 +82,13 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`\n---------------------------------------------------`);
     console.log(`Server running on http://localhost:${port}`);
     console.log(`Supabase Connection Initialized`);
     console.log(`---------------------------------------------------\n`);
 });
+
+// Initialize WebSockets
+const socketManager = require('./utils/socketManager');
+socketManager.init(server);
