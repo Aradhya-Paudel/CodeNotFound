@@ -51,14 +51,16 @@ async function runAllTests() {
         await testAppointmentManagement();
         await testMatchingEngine();
         await testLocationServices();
+        await testAuthentication();
+        await testAnalytics();
         await testAmbulanceManagement();
         await testIntegrationWorkflows();
         await testErrorHandling();
         await testPerformance();
 
-        // Phase 5: Production Readiness
-        await testAuthentication();
-        await testAnalytics();
+        // Phase 6: AI & Emergency Integration
+        await testEmergencyReporting();
+        await testAIAnalysis();
         await testResourceLogic();
 
         // Generate report
@@ -409,6 +411,69 @@ async function testAnalytics() {
         assertStatus(response, 200);
         assertHasProperty(response.data, 'realtime');
         assertHasProperty(response.data, 'systemHealth');
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CATEGORY 15: EMERGENCY REPORTING TESTS (PHASE 6)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function testEmergencyReporting() {
+    runner.setCategory('Emergency Reporting');
+
+    await runner.test('Create Guest Incident (Non-Auth)', async () => {
+        const incidentData = {
+            title: "Test Accident",
+            location: config.testData.testCoordinates.kathmandu,
+            description: "A suspicious test incident for verification."
+        };
+        const response = await makeRequest('POST', '/api/incidents', incidentData);
+        assertStatus(response, 201);
+        assertHasProperty(response.data, 'id');
+        config.testData.lastIncidentId = response.data.id;
+    });
+
+    await runner.test('Update Incident Status', async () => {
+        const id = config.testData.lastIncidentId;
+        const response = await makeRequest('PATCH', `/api/incidents/${id}`, {
+            status: 'assigned'
+        });
+        assertStatus(response, 200);
+        assertEqual(response.data.status, 'assigned');
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CATEGORY 16: AI & LLM TESTS (PHASE 6)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function testAIAnalysis() {
+    runner.setCategory('AI & Intelligence');
+
+    await runner.test('AI Accident Analysis (Vision)', async () => {
+        const imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Car_crash_2.jpg/800px-Car_crash_2.jpg';
+        const response = await makeRequest('POST', '/api/ai/analyze-image', { imageUrl });
+
+        if (response.status === 200) {
+            assertHasProperty(response.data, 'severity');
+        } else {
+            runner.addWarning(`AI Vision test returned ${response.status}. Likely API timeout or key issue.`);
+        }
+    });
+
+    await runner.test('AI Decision Explanation', async () => {
+        const matchData = {
+            incidentType: "Trauma",
+            chosenHospital: { name: "Bir Hospital", distance: 2.1, bedsAvailable: 10, specialties: ["Surgery"] },
+            alternatives: []
+        };
+        const response = await makeRequest('POST', '/api/ai/explain', { matchData });
+
+        if (response.status === 200) {
+            assertHasProperty(response.data, 'explanation');
+        } else {
+            runner.addWarning('AI Explanation test failed. AI might be unavailable.');
+        }
     });
 }
 

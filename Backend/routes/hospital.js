@@ -3,10 +3,9 @@ const router = express.Router();
 const supabase = require('../supabaseClient');
 const locationService = require('../utils/locationService');
 
-// GET /api/hospitals/map
-// Get all hospitals with map markers
 router.get('/hospitals/map', async (req, res) => {
     try {
+<<<<<<< Updated upstream
         // Query to get hospital details including extracted coordinates
         const { data, error } = await supabase
             .from('hospitals')
@@ -101,12 +100,30 @@ router.get('/hospitals/map', async (req, res) => {
             mapOverviewUrl: overviewUrl
         });
 
+=======
+        const { data, error } = await supabase.rpc('get_hospitals_with_coords');
+        if (error) throw error;
+        const formatHospital = (h) => ({
+            id: h.id,
+            name: h.name,
+            address: h.address || "Unknown Location",
+            available_beds: h.resources?.beds || 0,
+            icu_capacity: h.resources?.oxygen || 0,
+            blood_inventory: h.resources?.blood || {},
+            latitude: h.lat,
+            longitude: h.lon,
+            mapUrl: locationService.generateStaticMapUrl(h.lat, h.lon)
+        });
+        const hospitals = (data || []).map(formatHospital);
+        res.status(200).json({ hospitals });
+>>>>>>> Stashed changes
     } catch (err) {
-        console.error('Error fetching hospital map data:', err.message);
-        res.status(500).json({ error: 'Failed to fetch hospital map data', code: "INTERNAL_SERVER_ERROR" });
+        console.error('Map Error:', err);
+        res.status(500).json({ error: 'Failed' });
     }
 });
 
+<<<<<<< Updated upstream
 // GET /api/hospital/:id/status
 router.get('/hospital/:id/status', async (req, res) => {
     const { id } = req.params;
@@ -186,20 +203,39 @@ router.get('/hospitals/:id', async (req, res) => {
 });
 
 // GET /api/hospitals/:id/doctors
+=======
+>>>>>>> Stashed changes
 router.get('/hospitals/:id/doctors', async (req, res) => {
-    const { id } = req.params;
     try {
-        const { data, error } = await supabase
-            .from('doctors')
-            .select('*')
-            .eq('hospital_id', id);
-
-        if (error) throw error;
-        res.json(data);
+        const { data, error } = await supabase.from('profiles').select('*').eq('role', 'doctor');
+        res.status(200).json(data || []);
     } catch (err) {
-        res.status(500).json({ error: "Failed to fetch doctors" });
+        res.status(500).json({ error: 'Failed' });
     }
 });
 
+<<<<<<< Updated upstream
 
 module.exports = router;
+=======
+router.get('/hospitals/:id', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('hospitals').select('*').eq('id', req.params.id).single();
+        if (error || !data) return res.status(404).json({ error: "Not found" });
+        res.status(200).json(data);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed' });
+    }
+});
+
+router.get('/hospitals', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('hospitals').select('*');
+        res.status(200).json(data || []);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed' });
+    }
+});
+
+module.exports = router;
+>>>>>>> Stashed changes

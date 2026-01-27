@@ -44,6 +44,7 @@ app.use('/api', hospitalRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/ambulance', require('./routes/ambulance'));
+app.use('/api/ai', require('./routes/ai')); // AI Integration
 
 // Summary Endpoint (Legacy support if needed, but sticking to new routes)
 app.get('/api/hospitals', async (req, res) => {

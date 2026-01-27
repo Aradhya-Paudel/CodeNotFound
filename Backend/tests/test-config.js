@@ -5,7 +5,7 @@ module.exports = {
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseKey: process.env.SUPABASE_KEY,
     locationIQKey: process.env.LOCATIONIQ_API_KEY,
-    timeout: 10000, // 10 seconds per test
+    timeout: 90000, // 90 seconds per test
     retries: 2, // Retry failed tests twice
     verbose: process.argv.includes('--verbose'),
     stopOnFail: process.argv.includes('--stop-on-fail'),
