@@ -123,8 +123,24 @@ function Map({
 
   console.log("Map Center (defaultCenter):", defaultCenter);
 
-  // Calculate route from ambulance to target (incident or hospital) using OSRM
+  // Calculate route or use provided geometry
   useEffect(() => {
+    // 1. Use Server-Provided Geometry (Smart Match)
+    if (routeGeometry) {
+      try {
+        // GeoJSON is [lng, lat], Leaflet wants [lat, lng]
+        const coordinates = routeGeometry.coordinates || routeGeometry; // Handle if it's the full geometry object or just coords
+        if (Array.isArray(coordinates)) {
+          const leafletPoints = coordinates.map(p => [p[1], p[0]]);
+          setRoute(leafletPoints);
+          return;
+        }
+      } catch (e) {
+        console.warn("Invalid route geometry provided", e);
+      }
+    }
+
+    // 2. Fallback to OSRM (Client-side)
     const calculateRouteWithOSRM = async () => {
       if (!ambulanceLocation) {
         setRoute([]);
@@ -194,7 +210,7 @@ function Map({
     };
 
     calculateRouteWithOSRM();
-  }, [ambulanceLocation, nearestIncident, targetHospital]);
+  }, [ambulanceLocation, nearestIncident, targetHospital, routeGeometry]);
 
   const mapCenter = ambulanceLocation
     ? [ambulanceLocation.latitude, ambulanceLocation.longitude]
