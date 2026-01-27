@@ -1,33 +1,6 @@
+
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "env": {
-    "VITE_API_URL": "@vite-api-url"
-  },
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        {
-          "key": "cache-control",
-          "value": "max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "cache-control",
-          "value": "no-cache"
-        }
-      ]
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
