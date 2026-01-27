@@ -2,8 +2,9 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from "./pages/Login";
 
 import AmbulanceUser from "./pages/AmbulanceUser";
-import isAuthenticated from "./Hooks/isAuthenticated";
-import HospitalAdmin from "./pages/hospitals/HospitalDashboard";
+import IsAuthenticated from "./Hooks/isAuthenticated";
+import HospitalDashboard from "./pages/hospitals/HospitalDashboard";
+import HospitalInventory from "./pages/hospitals/HospitalInventory";
 import GuestUser from "./pages/GuestUser";
 
 const router = createBrowserRouter([
@@ -14,17 +15,25 @@ const router = createBrowserRouter([
   {
     path: "/ambulance",
     element: (
-      <isAuthenticated>
+      <IsAuthenticated>
         <AmbulanceUser />
-      </isAuthenticated>
+      </IsAuthenticated>
     ),
   },
   {
     path: "/hospital",
     element: (
-      <isAuthenticated>
-        <HospitalAdmin />
-      </isAuthenticated>
+      <IsAuthenticated>
+        <HospitalDashboard />
+      </IsAuthenticated>
+    ),
+  },
+  {
+    path: "/hospital/inventory",
+    element: (
+      <IsAuthenticated>
+        <HospitalInventory />
+      </IsAuthenticated>
     ),
   },
 ]);

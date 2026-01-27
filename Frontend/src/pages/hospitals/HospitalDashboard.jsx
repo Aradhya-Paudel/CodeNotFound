@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
-function HospitalAdmin() {
+function HospitalDashboard() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [hospital, setHospital] = useState(null);
@@ -345,4 +345,4 @@ function HospitalAdmin() {
   );
 }
 
-export default HospitalAdmin;
+export default HospitalDashboard;
