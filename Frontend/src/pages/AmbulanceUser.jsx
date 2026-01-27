@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Map from "../components/Map";
 
 function AmbulanceUser() {
   const navigate = useNavigate();
@@ -230,17 +231,6 @@ function AmbulanceUser() {
                       <h3 className="text-sm font-bold text-primary">
                         {incident.title}
                       </h3>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-1 rounded ${
-                          incident.severity === "high"
-                            ? "bg-red-100 text-red-700"
-                            : incident.severity === "medium"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {incident.severity.toUpperCase()}
-                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-600 mb-2">
                       <span className="material-symbols-outlined text-lg text-primary">
@@ -285,33 +275,11 @@ function AmbulanceUser() {
             </div>
           )}
           <main className="flex-1 relative overflow-hidden m-2 md:m-6 rounded-2xl border border-slate-300/30 shadow-inner">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{
-                backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuBRak6cJLOXb-92vwvevsuzRxgdR-r4cd2dWX8IDuUJsy_LFU0VfvHxay6tgf3OAZGEEXOVTINNWmlaBPHeg78elaiExy2j6qi0LP1I-iYS2sAljij_MRUZt5_QbZlUrBvsc1pu9vCyvADpsgVBsIIYZF8elpw1dhAGz_W7xOU5yODJ0HaPhFqUoeoC1LkoxkhbovCdBxpeElO3SVj68RYzIdMSL3wfAXOB_QDp4KVKUr5tWRMGzOlEshO1j1vamZKJE5LadVMOPOM')`,
-              }}
-            >
-              <div className="absolute inset-0 bg-primary/5 pointer-events-none"></div>
-              <div className="absolute top-[35%] left-[50%] flex flex-col items-center opacity-40">
-                <div className="bg-slate-400 p-2.5 rounded-full shadow-2xl border-4 border-white">
-                  <span className="material-symbols-outlined text-white text-2xl">
-                    emergency
-                  </span>
-                </div>
-              </div>
-              <div className="absolute top-[60%] left-[35%] flex flex-col items-center">
-                <div className="bg-primary p-2.5 rounded-full shadow-2xl border-4 border-white animate-pulse">
-                  <span className="material-symbols-outlined text-white text-xl">
-                    ambulance
-                  </span>
-                </div>
-                <div className="bg-primary text-white px-3 py-1 rounded shadow-lg mt-2">
-                  <span className="text-[10px] font-bold whitespace-nowrap uppercase">
-                    AMB-12 (You)
-                  </span>
-                </div>
-              </div>
-            </div>
+            <Map
+              ambulanceLocation={location}
+              ambulanceName={user}
+              incidents={incidents}
+            />
           </main>
         </div>
       </div>
