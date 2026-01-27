@@ -1,5 +1,4 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Login from "./pages/Login";
 
 import AmbulanceUser from "./pages/AmbulanceUser";
 import IsAuthenticated from "./Hooks/isAuthenticated";
@@ -8,11 +7,22 @@ import HospitalInventory from "./pages/hospitals/HospitalInventory";
 import GuestUser from "./pages/GuestUser";
 import HospitalStaff from "./pages/hospitals/HospitalStaff";
 import HospitalFleet from "./pages/hospitals/HospitalFleet";
+import LandingPage from "./pages/LandingPage";
+import HospitalLogin from "./pages/HospitalLogin";
+import AmbulanceLogin from "./pages/AmbulanceLogin";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Login />,
+    element: <LandingPage />,
+  },
+  {
+    path: "/login/hospital",
+    element: <HospitalLogin />,
+  },
+  {
+    path: "/login/ambulance",
+    element: <AmbulanceLogin />,
   },
   {
     path: "/ambulance",

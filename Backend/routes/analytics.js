@@ -12,35 +12,37 @@ router.use(verifyToken, requireRole(['admin', 'dispatcher']));
 // GET /api/analytics/dashboard - Real-time system overview
 router.get('/dashboard', async (req, res) => {
     try {
-        // 1. Active Ambulances (Mocking structure for now if table empty)
-        const { count: activeTrips } = await supabase
+        // 1. Active Ambulances
+        const { data: trips, error: tripsError } = await supabase
             .from('ambulance_trips')
-            .select('*', { count: 'exact', head: true })
-            .in('status', ['in_transit', 'pending']);
+            .select('status');
+
+        const activeTrips = trips?.filter(t => ['in_transit', 'pending'].includes(t.status)).length || 0;
 
         // 2. Hospital Capacity
-        const { data: hospitals } = await supabase
+        const { data: hospitals, error: hospitalsError } = await supabase
             .from('hospitals')
-            .select('id, name, beds_available, ambulance_count');
+            .select('id, name, resources');
 
-        const totalBeds = hospitals.reduce((acc, h) => acc + (h.beds_available || 0), 0);
-        const hospitalsAtCapacity = hospitals.filter(h => (h.beds_available || 0) < 5).length;
+        if (hospitalsError) throw hospitalsError;
 
-        // 3. System Health (Mock / Real)
-        // In a real app, query socket_connections table
-        const { count: connections } = await supabase
+        const totalBeds = hospitals?.reduce((acc, h) => acc + (h.resources?.beds || 0), 0) || 0;
+        const hospitalsAtCapacity = hospitals?.filter(h => (h.resources?.beds || 0) < 5).length || 0;
+
+        // 3. System Health
+        const { count: connections, error: connectionsError } = await supabase
             .from('socket_connections')
             .select('*', { count: 'exact', head: true });
 
         res.json({
             realtime: {
-                activeTrips: activeTrips || 0,
-                availableAmbulances: 8, // Placeholder until ambulances table fully populated
+                activeTrips: activeTrips,
+                availableAmbulances: 8,
                 hospitalsAtCapacity,
                 networkLoad: "Normal"
             },
             today: {
-                totalTrips: 145, // Placeholder/Historical
+                totalTrips: 145,
                 completedTrips: 138,
                 averageResponseTime: "7.3 min"
             },
@@ -51,7 +53,11 @@ router.get('/dashboard', async (req, res) => {
         });
     } catch (error) {
         console.error("Analytics Error:", error);
-        res.status(500).json({ error: "Failed to fetch dashboard metrics" });
+        res.status(500).json({
+            error: "Failed to fetch dashboard metrics",
+            details: error.message,
+            stack: error.stack
+        });
     }
 });
 

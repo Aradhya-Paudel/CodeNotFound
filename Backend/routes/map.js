@@ -3,10 +3,10 @@ const router = express.Router();
 const locationService = require('../utils/locationService');
 const rateLimiter = require('../middleware/rateLimiter');
 
-// POST /api/geocode
+// GET or POST /api/geocode
 // Convert address to coordinates
-router.post('/geocode', rateLimiter, async (req, res) => {
-    const { address } = req.body;
+router.all('/geocode', rateLimiter, async (req, res) => {
+    const address = req.query.address || req.body.address;
 
     if (!address) {
         return res.status(400).json({
@@ -32,12 +32,13 @@ router.post('/geocode', rateLimiter, async (req, res) => {
     });
 });
 
-// POST /api/reverse-geocode
+// GET or POST /api/reverse-geocode
 // Convert coordinates to address
-router.post('/reverse-geocode', rateLimiter, async (req, res) => {
-    const { latitude, longitude } = req.body;
+router.all('/reverse-geocode', rateLimiter, async (req, res) => {
+    const latitude = parseFloat(req.query.lat || req.query.latitude || req.body.latitude);
+    const longitude = parseFloat(req.query.lon || req.query.longitude || req.body.longitude);
 
-    if (latitude === undefined || longitude === undefined) {
+    if (isNaN(latitude) || isNaN(longitude)) {
         return res.status(400).json({
             error: "Latitude and longitude are required",
             code: "VALIDATION_ERROR"

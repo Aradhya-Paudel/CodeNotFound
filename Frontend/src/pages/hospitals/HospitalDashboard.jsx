@@ -24,7 +24,8 @@ function HospitalDashboard() {
         setLoading(true);
         // 1. Resolve Hospital ID from Name (Demo Logic)
         const userName = localStorage.getItem("userName"); // e.g., "Bir Hospital"
-        const { data: allHospitals } = await api.get('/hospitals/map');
+        const { data: response } = await api.get('/hospitals/map');
+        const allHospitals = response.hospitals || [];
 
         const myHospital = allHospitals.find(h => h.name === userName);
 

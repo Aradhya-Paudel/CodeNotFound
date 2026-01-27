@@ -31,7 +31,8 @@ router.get('/hospitals/map', async (req, res) => {
         });
 
         const hospitals = data.map(formatHospital);
-        res.json(hospitals);
+        console.log(`Sending ${hospitals.length} hospitals in map view`);
+        res.json({ hospitals });
 
     } catch (err) {
         console.error('Error fetching hospital map data:', err.message);
@@ -106,15 +107,24 @@ router.get('/hospitals/:id', async (req, res) => {
 router.get('/hospitals/:id/doctors', async (req, res) => {
     const { id } = req.params;
     try {
-        const { data, error } = await supabase
-            .from('doctors')
-            .select('*')
-            .eq('hospital_id', id);
+        // Handle invalid UUID if necessary
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+
+        let query = supabase.from('doctors').select('*');
+
+        if (isUuid) {
+            query = query.eq('hospital_id', id);
+        } else {
+            // For legacy or numeric hospital IDs (like in the seeded data)
+            query = query.eq('hospital_id', parseInt(id));
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         res.json(data);
     } catch (err) {
-        res.status(500).json({ error: "Failed to fetch doctors" });
+        res.status(500).json({ error: "Failed to fetch doctors", details: err.message });
     }
 });
 

@@ -72,15 +72,23 @@ router.post('/register', async (req, res) => {
 
 // LOGIN
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, username, password } = req.body;
 
   try {
-    // 1. Find user
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
+    // 1. Find user by email or username (or both)
+    let query = supabase.from('users').select('*');
+
+    if (email && username) {
+      query = query.eq('email', email).eq('username', username);
+    } else if (email) {
+      query = query.eq('email', email);
+    } else if (username) {
+      query = query.eq('username', username);
+    } else {
+      return res.status(400).json({ error: "Email or username required" });
+    }
+
+    const { data: user, error } = await query.single();
 
     if (error || !user) {
       return res.status(401).json({ error: "Invalid credentials" });

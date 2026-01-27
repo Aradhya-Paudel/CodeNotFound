@@ -367,7 +367,7 @@ async function testAuthentication() {
 
         if (response.status === 409) {
             runner.addWarning('User already exists, skipping creation check');
-        } else {
+        } else if (response.status !== 201) {
             assertStatus(response, 201);
         }
 
