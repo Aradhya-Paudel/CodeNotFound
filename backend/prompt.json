@@ -1,818 +1,865 @@
 {
-  "project_name": "Emergency Response System Backend",
-  "project_description": "Backend system for ambulance dispatch, hospital management, and emergency response coordination",
+  "task_name": "Implement Mathematical Blood Transfer System (Scenario 3) with Enhanced Features",
+  "task_overview": "Add mathematical logic for inter-hospital blood transfer, proximity-based 'Reached?' button, photo storage, and prepare for Supabase migration",
   
-  "development_phases": [
+  "phases": [
     {
       "phase": 1,
-      "name": "Project Setup & Structure",
+      "name": "Implement Mathematical Blood Transfer Logic",
+      "description": "Add proper mathematical calculations for blood availability checking and hospital-to-hospital blood requests",
+      
       "tasks": [
         {
           "task_id": "1.1",
-          "description": "Create backend folder structure",
-          "deliverables": [
-            "backend/",
-            "backend/src/",
-            "backend/src/routes/",
-            "backend/src/controllers/",
-            "backend/src/models/",
-            "backend/src/utils/",
-            "backend/src/middleware/",
-            "backend/data/"
-          ],
-          "validation": "Folder structure created successfully"
+          "name": "Create Blood Availability Checker Utility",
+          "file": "backend/src/utils/bloodChecker.js",
+          "purpose": "Check if hospital has sufficient blood for casualties",
+          
+          "functions_required": [
+            {
+              "function_name": "checkBloodAvailability",
+              "parameters": ["hospitalId", "requiredBlood"],
+              "requiredBlood_format": [
+                {
+                  "bloodType": "O-",
+                  "liters": 8
+                }
+              ],
+              "logic": [
+                "1. Read hospital data from hospitals.json",
+                "2. Get hospital's bloodInventory.bloodTypes array",
+                "3. For each required blood type:",
+                "   a. Find matching blood type in hospital inventory",
+                "   b. Check if available liters >= required liters",
+                "4. Return object with availability status per blood type"
+              ],
+              "return_format": {
+                "sufficient": "boolean (true if ALL blood types have enough)",
+                "details": [
+                  {
+                    "bloodType": "O-",
+                    "required": 8,
+                    "available": 3,
+                    "sufficient": false,
+                    "shortage": 5
+                  }
+                ]
+              }
+            },
+            {
+              "function_name": "calculateTotalBloodNeeded",
+              "parameters": ["casualties"],
+              "casualties_format": [
+                {
+                  "bloodType": "O-",
+                  "bloodRequired": 5
+                },
+                {
+                  "bloodType": "O-",
+                  "bloodRequired": 3
+                }
+              ],
+              "logic": [
+                "1. Group casualties by blood type",
+                "2. Sum up liters needed per blood type",
+                "3. Return aggregated requirements"
+              ],
+              "return_format": [
+                {
+                  "bloodType": "O-",
+                  "totalLiters": 8
+                }
+              ]
+            }
+          ]
         },
         {
           "task_id": "1.2",
-          "description": "Initialize Node.js project with package.json",
-          "dependencies": [
-            "express",
-            "cors",
-            "dotenv",
-            "body-parser",
-            "nodemon"
+          "name": "Update Hospital Finder to Check Blood Availability",
+          "file": "backend/src/controllers/hospitalController.js",
+          "endpoint": "POST /api/hospitals/find-optimal",
+          
+          "current_behavior": "Finds nearest hospital based on distance, specialists, beds",
+          "new_behavior": "MUST also check if hospital has sufficient blood inventory",
+          
+          "updated_logic": [
+            "1. Calculate total blood needed from casualties array",
+            "2. Get all hospitals",
+            "3. For each hospital:",
+            "   a. Calculate distance from ambulance",
+            "   b. Check blood availability using checkBloodAvailability()",
+            "   c. Check specialist availability",
+            "   d. Check beds available",
+            "   e. Calculate score:",
+            "      - Blood match: 40% (if has ALL required blood types/amounts, score = 40, else 0)",
+            "      - Specialist match: 30% (percentage of required specialists available)",
+            "      - Distance score: 20% (closer = higher score, use inverse distance)",
+            "      - Bed score: 10% (more beds = higher)",
+            "4. Sort by total score (highest first)",
+            "5. Return top hospital WITH blood availability details"
           ],
-          "deliverables": [
-            "backend/package.json",
-            "backend/.env.example"
-          ],
-          "validation": "package.json created with all dependencies"
+          
+          "response_format": {
+            "success": true,
+            "hospital": "hospital object",
+            "distance": "number in km",
+            "route": {
+              "destination": "hospital location",
+              "latitude": "number",
+              "longitude": "number"
+            },
+            "matchDetails": {
+              "bloodAvailability": {
+                "sufficient": "boolean",
+                "details": "array of blood type availability"
+              },
+              "specialistAvailable": "boolean",
+              "bedsAvailable": "number"
+            }
+          },
+          
+          "critical_note": "If bloodAvailability.sufficient = false, frontend will show 'Ask for Help' button"
         },
         {
           "task_id": "1.3",
-          "description": "Create main server file",
-          "deliverables": [
-            "backend/src/server.js"
+          "name": "Create Blood Request Creation Logic",
+          "file": "backend/src/controllers/bloodRequestController.js",
+          "endpoint": "POST /api/blood-requests/create",
+          
+          "request_body": {
+            "fromHospitalId": "number (hospital requesting blood)",
+            "bloodRequirements": [
+              {
+                "bloodType": "O-",
+                "liters": 5
+              }
+            ],
+            "reason": "string (optional)"
+          },
+          
+          "logic": [
+            "1. Get requesting hospital details",
+            "2. Calculate total shortage (what requesting hospital needs but doesn't have)",
+            "3. Find all hospitals within 50km radius",
+            "4. For each nearby hospital:",
+            "   a. Check if it has ALL required blood types in sufficient amounts",
+            "   b. Calculate distance from requesting hospital",
+            "5. Filter hospitals that have sufficient blood",
+            "6. Sort by distance (nearest first)",
+            "7. Select nearest hospital with sufficient blood",
+            "8. Create blood request with:",
+            "   - requestId: 'BR-' + timestamp",
+            "   - fromHospitalId: requesting hospital",
+            "   - toHospitalId: supplying hospital",
+            "   - bloodType: blood type needed (if multiple, handle separately or combine)",
+            "   - litersNeeded: total liters needed",
+            "   - status: 'pending'",
+            "   - createdAt: current timestamp",
+            "   - distanceKm: distance between hospitals",
+            "   - ambulanceAssigned: null",
+            "9. Save to blood_requests.json",
+            "10. Add to supplying hospital's bloodRequests array in hospitals.json"
           ],
-          "requirements": [
-            "Express server setup",
-            "CORS enabled",
-            "Port configuration from .env",
-            "Basic error handling"
+          
+          "response_format": {
+            "success": true,
+            "request": "created blood request object",
+            "targetHospital": "hospital that will supply blood",
+            "distance": "distance in km"
+          },
+          
+          "error_cases": [
+            "No nearby hospital has sufficient blood → return error with suggestion to contact blood bank",
+            "Requesting hospital ID not found → return 404 error"
+          ]
+        },
+        {
+          "task_id": "1.4",
+          "name": "Implement Blood Request Approval Logic",
+          "file": "backend/src/controllers/bloodRequestController.js",
+          "endpoint": "POST /api/blood-requests/:requestId/approve",
+          
+          "request_body": {
+            "hospitalId": "number (approving hospital ID)"
+          },
+          
+          "logic": [
+            "1. Get blood request by requestId",
+            "2. Verify hospitalId matches request.toHospitalId (only target hospital can approve)",
+            "3. Get approving hospital details",
+            "4. Verify hospital still has sufficient blood (double-check)",
+            "5. Find nearest ACTIVE ambulance to approving hospital",
+            "6. Update blood request:",
+            "   - status: 'approved'",
+            "   - approvedAt: current timestamp",
+            "   - ambulanceAssigned: ambulance name",
+            "7. Deduct blood from approving hospital's inventory:",
+            "   - Find bloodType in hospital.bloodInventory.bloodTypes",
+            "   - Subtract litersNeeded from that blood type",
+            "   - Recalculate total blood inventory",
+            "8. Update ambulance:",
+            "   - status: 'busy'",
+            "   - currentCasualtyId: requestId (repurpose this field for blood requests)",
+            "9. Calculate route from approving hospital to requesting hospital",
+            "10. Save all changes to respective JSON files"
           ],
-          "validation": "Server starts without errors"
+          
+          "response_format": {
+            "success": true,
+            "ambulance": "assigned ambulance object",
+            "route": {
+              "from": "approving hospital location",
+              "to": "requesting hospital location",
+              "fromLatitude": "number",
+              "fromLongitude": "number",
+              "toLatitude": "number",
+              "toLongitude": "number"
+            },
+            "estimatedDistance": "distance in km"
+          }
+        },
+        {
+          "task_id": "1.5",
+          "name": "Implement Blood Delivery Completion",
+          "file": "backend/src/controllers/bloodRequestController.js",
+          "endpoint": "POST /api/blood-requests/:requestId/complete",
+          
+          "request_body": {
+            "ambulanceName": "string (ambulance delivering blood)"
+          },
+          
+          "logic": [
+            "1. Get blood request by requestId",
+            "2. Verify request status is 'approved'",
+            "3. Verify ambulanceName matches request.ambulanceAssigned",
+            "4. Get requesting hospital details",
+            "5. Add blood to requesting hospital's inventory:",
+            "   - Find bloodType in hospital.bloodInventory.bloodTypes",
+            "   - Add litersNeeded to that blood type",
+            "   - Recalculate total blood inventory",
+            "6. Update blood request:",
+            "   - status: 'completed'",
+            "   - completedAt: current timestamp",
+            "7. Update ambulance:",
+            "   - status: 'active'",
+            "   - currentCasualtyId: null",
+            "8. Remove request from hospital's bloodRequests array",
+            "9. Save all changes"
+          ],
+          
+          "response_format": {
+            "success": true,
+            "message": "Blood transfer completed successfully",
+            "updatedInventory": "requesting hospital's new blood inventory"
+          }
         }
-      ]
+      ],
+      
+      "validation": "Test with sample data: Hospital needs 8L O-, has 3L, another hospital has 15L, after transfer first hospital should have 11L"
     },
+    
     {
       "phase": 2,
-      "name": "Data Models & Storage",
+      "name": "Implement Proximity-Based 'Reached?' Button Logic",
+      "description": "Add geolocation checking to show 'Reached?' button when ambulance is 5-10 meters from casualty location",
+      
       "tasks": [
         {
           "task_id": "2.1",
-          "description": "Create JSON data files from provided structures",
-          "source_data": {
-            "hospitals": {
-              "file": "backend/data/hospitals.json",
-              "structure": "Array of hospital objects with id, name, password, email, phone, address, location, latitude, longitude, ambulanceCount, bedsAvailable, bloodInventory (total, bloodTypes array), staffCount (object with specialties), incomingAmbulances (array), bloodRequests (array)",
-              "initial_data": "Use provided hospital JSON structure, add 3-5 hospitals",
-              "password_storage": "Store passwords in same JSON (no hashing required)"
+          "name": "Create Proximity Checker Utility",
+          "file": "backend/src/utils/geoUtils.js",
+          
+          "new_functions": [
+            {
+              "function_name": "isWithinProximity",
+              "parameters": ["lat1", "lon1", "lat2", "lon2", "radiusMeters"],
+              "logic": [
+                "1. Use Haversine formula to calculate distance",
+                "2. Convert result from km to meters (multiply by 1000)",
+                "3. Return true if distance <= radiusMeters, else false"
+              ],
+              "example": "isWithinProximity(28.2096, 83.9856, 28.2097, 83.9857, 10) → true/false",
+              "return_type": "boolean"
             },
-            "ambulances": {
-              "file": "backend/data/ambulances.json",
-              "structure": "Array of ambulance objects with name (id), password, latitude, longitude, status (active/busy), currentCasualtyId (if busy)",
-              "initial_data": "Use provided ambulance JSON structure, add 5-8 ambulances",
-              "password_storage": "Store passwords in same JSON (no hashing required)",
-              "note": "Add status field (default: 'active') and currentCasualtyId field (default: null)"
-            },
-            "submissions": {
-              "file": "backend/data/submissions.json",
-              "structure": "Array of submission objects with id, title, image (base64), location, latitude, longitude, accuracy, time, status (pending/assigned/completed), assignedAmbulance (ambulance name if assigned)",
-              "initial_data": "Use provided submission JSON structure",
-              "note": "Add status field (default: 'pending') and assignedAmbulance field (default: null)"
-            },
-            "active_accidents": {
-              "file": "backend/data/active_accidents.json",
-              "structure": "Array of accident objects with id, title, location, severity, image, status, time, assignedAmbulance",
-              "initial_data": "Use provided active accident JSON structure",
-              "note": "Add assignedAmbulance field (default: null)"
-            },
-            "casualties": {
-              "file": "backend/data/casualties.json",
-              "structure": "Array of casualty objects with id, accidentId, bloodType, bloodRequired (liters), severity (critical/urgent/stable), specialtyRequired, hospitalAssigned, status (pending/transported/treated)",
-              "initial_data": "Empty array initially",
-              "note": "This will be populated when ambulance reports casualties"
-            },
-            "blood_requests": {
-              "file": "backend/data/blood_requests.json",
-              "structure": "Array of blood request objects with requestId, fromHospitalId, toHospitalId, bloodType, litersNeeded, status (pending/approved/rejected/completed), createdAt, ambulanceAssigned",
-              "initial_data": "Empty array initially",
-              "note": "For scenario 3 - inter-hospital blood transfer"
+            {
+              "function_name": "calculateDistanceInMeters",
+              "parameters": ["lat1", "lon1", "lat2", "lon2"],
+              "logic": [
+                "1. Use existing calculateDistance() function (returns km)",
+                "2. Multiply by 1000 to convert to meters",
+                "3. Return distance in meters"
+              ],
+              "return_type": "number (meters)"
             }
-          },
-          "deliverables": [
-            "backend/data/hospitals.json",
-            "backend/data/ambulances.json",
-            "backend/data/submissions.json",
-            "backend/data/active_accidents.json",
-            "backend/data/casualties.json",
-            "backend/data/blood_requests.json"
-          ],
-          "validation": "All JSON files created with proper structure and sample data"
+          ]
         },
         {
           "task_id": "2.2",
-          "description": "Create data access utility functions",
-          "deliverables": [
-            "backend/src/utils/dataAccess.js"
+          "name": "Create Proximity Check Endpoint",
+          "file": "backend/src/controllers/ambulanceController.js",
+          "endpoint": "POST /api/ambulances/:name/check-proximity",
+          
+          "request_body": {
+            "currentLatitude": "number (ambulance's current position)",
+            "currentLongitude": "number",
+            "destinationLatitude": "number (casualty/hospital position)",
+            "destinationLongitude": "number",
+            "proximityThreshold": "number in meters (default: 10)"
+          },
+          
+          "logic": [
+            "1. Calculate distance between current and destination positions",
+            "2. Check if within proximity threshold (5-10 meters)",
+            "3. Return proximity status with distance"
           ],
-          "functions_required": [
-            "readJSON(filename) - reads and parses JSON file",
-            "writeJSON(filename, data) - writes data to JSON file",
-            "getAll(collection) - gets all records from a collection",
-            "getById(collection, id) - gets single record by id",
-            "create(collection, data) - adds new record",
-            "update(collection, id, data) - updates existing record",
-            "delete(collection, id) - deletes record",
-            "findByQuery(collection, query) - finds records matching query"
+          
+          "response_format": {
+            "success": true,
+            "withinProximity": "boolean",
+            "distanceMeters": "number",
+            "showReachedButton": "boolean (same as withinProximity)"
+          },
+          
+          "frontend_usage": "Frontend calls this endpoint every time ambulance location updates (every 5-10 seconds). If withinProximity = true, show 'Reached?' button"
+        },
+        {
+          "task_id": "2.3",
+          "name": "Create Casualty Reporting Endpoint (Enhanced)",
+          "file": "backend/src/controllers/casualtyController.js",
+          "endpoint": "POST /api/casualties/report-on-arrival",
+          
+          "trigger": "Called when ambulance driver clicks 'Reached?' button and submits casualty data",
+          
+          "request_body": {
+            "ambulanceName": "string",
+            "accidentId": "string",
+            "numberOfCasualties": "number (from popup)",
+            "casualties": [
+              {
+                "bloodType": "string",
+                "bloodRequired": "number",
+                "severity": "critical/urgent/stable",
+                "specialtyRequired": "string"
+              }
+            ]
+          },
+          
+          "logic": [
+            "1. Verify ambulance is within proximity (optional security check)",
+            "2. Create casualties with IDs",
+            "3. Link to accidentId",
+            "4. Save to casualties.json",
+            "5. Automatically trigger hospital matching (call findOptimalHospital internally)",
+            "6. Return casualties and matched hospital"
           ],
-          "validation": "All CRUD operations working correctly"
+          
+          "response_format": {
+            "success": true,
+            "casualties": "array of created casualties",
+            "recommendedHospital": "optimal hospital object (may have insufficient blood)",
+            "bloodAvailability": "blood availability details"
+          }
         }
       ]
     },
+    
     {
       "phase": 3,
-      "name": "Authentication APIs",
+      "name": "Implement Photo Storage System",
+      "description": "Store guest-submitted photos and make them accessible to ambulances",
+      
       "tasks": [
         {
           "task_id": "3.1",
-          "description": "Create authentication controller",
-          "deliverables": [
-            "backend/src/controllers/authController.js"
+          "name": "Enhance Submission Endpoint for Photo Storage",
+          "file": "backend/src/controllers/submissionController.js",
+          "endpoint": "POST /api/submissions",
+          
+          "current_behavior": "Accepts base64 image and stores in submissions.json",
+          "new_behavior": "Store base64 image and make it retrievable by assigned ambulance",
+          
+          "request_body": {
+            "title": "string",
+            "image": "string (base64 data URL: data:image/jpeg;base64,...)",
+            "location": "string",
+            "latitude": "number",
+            "longitude": "number",
+            "accuracy": "number"
+          },
+          
+          "storage_logic": [
+            "1. Validate base64 image format",
+            "2. Create submission with unique ID",
+            "3. Store entire base64 string in image field",
+            "4. Save to submissions.json",
+            "5. Also create entry in active_accidents.json with same image"
           ],
-          "endpoints": [
-            {
-              "method": "POST",
-              "path": "/api/auth/ambulance/login",
-              "description": "Ambulance login",
-              "request_body": {
-                "name": "ambulance name/id",
-                "password": "password"
-              },
-              "response": {
-                "success": true,
-                "data": "ambulance object without password",
-                "token": "simple token (ambulance-{name})"
-              },
-              "validation": "Check name and password in ambulances.json"
-            },
-            {
-              "method": "POST",
-              "path": "/api/auth/hospital/login",
-              "description": "Hospital login",
-              "request_body": {
-                "email": "hospital email",
-                "password": "password"
-              },
-              "response": {
-                "success": true,
-                "data": "hospital object without password",
-                "token": "simple token (hospital-{id})"
-              },
-              "validation": "Check email and password in hospitals.json"
-            }
-          ],
-          "validation": "Both login endpoints working correctly"
+          
+          "validation": "Check that image starts with 'data:image/' prefix"
         },
         {
           "task_id": "3.2",
-          "description": "Create authentication routes",
-          "deliverables": [
-            "backend/src/routes/authRoutes.js"
+          "name": "Create Endpoint to Retrieve Accident Details with Photo",
+          "file": "backend/src/controllers/ambulanceController.js",
+          "endpoint": "GET /api/accidents/:accidentId",
+          
+          "purpose": "Ambulance can view accident details including photo",
+          
+          "logic": [
+            "1. Get accident from active_accidents.json by ID",
+            "2. If not found, check submissions.json",
+            "3. Return complete accident details including base64 image"
           ],
-          "validation": "Routes connected to controller"
+          
+          "response_format": {
+            "success": true,
+            "accident": {
+              "id": "string",
+              "title": "string",
+              "location": "string",
+              "latitude": "number",
+              "longitude": "number",
+              "image": "string (base64 data URL)",
+              "severity": "string",
+              "status": "string",
+              "time": "string",
+              "assignedAmbulance": "string or null"
+            }
+          },
+          
+          "frontend_usage": "Ambulance app displays accident photo when viewing assigned case"
+        },
+        {
+          "task_id": "3.3",
+          "name": "Add Photo to Active Cases Response",
+          "file": "backend/src/controllers/ambulanceController.js",
+          "endpoint": "GET /api/ambulances/:name/active-cases",
+          
+          "enhancement": "Include accident photo in response",
+          
+          "updated_response": {
+            "success": true,
+            "case": {
+              "id": "string",
+              "title": "string",
+              "location": "string",
+              "latitude": "number",
+              "longitude": "number",
+              "image": "string (base64)",
+              "severity": "string",
+              "assignedAmbulance": "string"
+            }
+          }
         }
       ]
     },
+    
     {
       "phase": 4,
-      "name": "Scenario 1 - Guest User Reports Accident",
-      "tasks": [
-        {
-          "task_id": "4.1",
-          "description": "Create submission controller for guest reports",
-          "deliverables": [
-            "backend/src/controllers/submissionController.js"
-          ],
-          "endpoints": [
-            {
-              "method": "POST",
-              "path": "/api/submissions",
-              "description": "Guest user submits accident with photo and location",
-              "request_body": {
-                "title": "accident description",
-                "image": "base64 image data",
-                "location": "address string",
-                "latitude": "number",
-                "longitude": "number",
-                "accuracy": "number"
-              },
-              "logic": [
-                "Generate unique ID (SUB-{timestamp})",
-                "Set time to current timestamp",
-                "Set status to 'pending'",
-                "Save to submissions.json",
-                "Also add to active_accidents.json with auto-detected severity"
-              ],
-              "response": {
-                "success": true,
-                "submissionId": "generated ID",
-                "message": "Emergency reported successfully"
-              }
-            },
-            {
-              "method": "GET",
-              "path": "/api/submissions",
-              "description": "Get all submissions",
-              "response": "Array of all submissions"
-            }
-          ],
-          "validation": "Submission creation working"
+      "name": "Generate Test Data (Mathematical Setup)",
+      "description": "Create 3-4 data entries that mathematically work for Scenario 3 testing",
+      
+      "data_specifications": {
+        "location_constraint": "All locations must be in Pokhara, Nepal area",
+        "hospitals_constraint": "Create NEW hospitals not in current data",
+        "data_count": {
+          "hospitals": 2,
+          "ambulances": 1,
+          "accidents": 1,
+          "casualties": 2
         },
-        {
-          "task_id": "4.2",
-          "description": "Create ambulance location and dispatch controller",
-          "deliverables": [
-            "backend/src/controllers/ambulanceController.js"
-          ],
-          "endpoints": [
-            {
-              "method": "GET",
-              "path": "/api/ambulances/nearest",
-              "description": "Find nearest available ambulance to casualty",
-              "query_params": {
-                "latitude": "casualty latitude",
-                "longitude": "casualty longitude",
-                "radius": "search radius in km (default 50)"
-              },
-              "logic": [
-                "Get all ambulances with status 'active'",
-                "Calculate distance from casualty to each ambulance using Haversine formula",
-                "Filter ambulances within radius",
-                "Sort by distance",
-                "Return nearest ambulance"
-              ],
-              "response": {
-                "success": true,
-                "ambulance": "nearest ambulance object",
-                "distance": "distance in km"
-              }
-            },
-            {
-              "method": "POST",
-              "path": "/api/ambulances/:name/assign",
-              "description": "Assign ambulance to casualty",
-              "request_body": {
-                "casualtyId": "submission or accident ID",
-                "casualtyLocation": {
-                  "latitude": "number",
-                  "longitude": "number"
-                }
-              },
-              "logic": [
-                "Update ambulance status to 'busy'",
-                "Set currentCasualtyId",
-                "Update submission/accident assignedAmbulance field",
-                "Calculate route (return casualty coordinates for now)"
-              ],
-              "response": {
-                "success": true,
-                "route": {
-                  "destination": "casualty location",
-                  "latitude": "number",
-                  "longitude": "number"
-                }
-              }
-            },
-            {
-              "method": "PUT",
-              "path": "/api/ambulances/:name/location",
-              "description": "Update ambulance location (real-time tracking)",
-              "request_body": {
-                "latitude": "number",
-                "longitude": "number"
-              },
-              "logic": "Update ambulance coordinates in ambulances.json",
-              "response": {
-                "success": true,
-                "message": "Location updated"
-              }
-            },
-            {
-              "method": "GET",
-              "path": "/api/ambulances/:name/active-cases",
-              "description": "Get active cases for ambulance (nearest pending casualty)",
-              "logic": [
-                "Get ambulance details",
-                "If status is 'busy', return current casualty",
-                "If status is 'active', find nearest pending submission/accident",
-                "Return only ONE nearest case"
-              ],
-              "response": {
-                "success": true,
-                "case": "casualty object or null"
-              }
-            }
-          ],
-          "validation": "Ambulance assignment and tracking working"
+        
+        "hospital_1": {
+          "name": "Gandaki Medical College",
+          "role": "Requesting hospital (insufficient blood)",
+          "location": "Lekhnath, Pokhara",
+          "coordinates": {
+            "latitude": 28.1850,
+            "longitude": 84.0950,
+            "note": "Static location in Pokhara area"
+          },
+          "blood_inventory": {
+            "O-": 4,
+            "note": "MUST have LESS than 8 liters O-"
+          },
+          "password": "gandaki123",
+          "email": "admin@gandakimedical.edu.np",
+          "phone": "+977-61-560100"
         },
-        {
-          "task_id": "4.3",
-          "description": "Create utility for distance calculation",
-          "deliverables": [
-            "backend/src/utils/geoUtils.js"
-          ],
-          "functions_required": [
-            "calculateDistance(lat1, lon1, lat2, lon2) - Haversine formula returns km",
-            "findNearest(origin, locations) - finds nearest location from array",
-            "isWithinRadius(point1, point2, radiusKm) - checks if within radius"
-          ],
-          "validation": "Distance calculations accurate"
+        
+        "hospital_2": {
+          "name": "Fishtail Hospital",
+          "role": "Supplying hospital (sufficient blood)",
+          "location": "Khahare, Pokhara",
+          "coordinates": {
+            "latitude": 28.2200,
+            "longitude": 84.0200,
+            "note": "Static location, approximately 5-7km from Hospital 1"
+          },
+          "blood_inventory": {
+            "O-": 20,
+            "note": "MUST have AT LEAST 15 liters O-"
+          },
+          "password": "fishtail456",
+          "email": "admin@fishtailhospital.com.np",
+          "phone": "+977-61-465111"
         },
-        {
-          "task_id": "4.4",
-          "description": "Create routes for submissions and ambulances",
-          "deliverables": [
-            "backend/src/routes/submissionRoutes.js",
-            "backend/src/routes/ambulanceRoutes.js"
-          ],
-          "validation": "All routes working"
+        
+        "ambulance": {
+          "name": "MH-16-AB-5001",
+          "role": "Transporting casualties, initially 15km from Hospital 1",
+          "coordinates": {
+            "latitude": 28.3000,
+            "longitude": 84.1500,
+            "note": "Calculate to ensure approximately 15km from Hospital 1"
+          },
+          "status": "busy",
+          "currentCasualtyId": "ACC-TEST-001",
+          "password": "amb5001"
+        },
+        
+        "accident": {
+          "id": "ACC-TEST-001",
+          "title": "Truck Collision on Prithvi Highway",
+          "location": "Near Dumre, Prithvi Highway",
+          "coordinates": {
+            "latitude": 28.3000,
+            "longitude": 84.1500,
+            "note": "Same as ambulance location"
+          },
+          "severity": "critical",
+          "status": "assigned",
+          "assignedAmbulance": "MH-16-AB-5001"
+        },
+        
+        "casualties": [
+          {
+            "id": "CAS-TEST-001",
+            "accidentId": "ACC-TEST-001",
+            "bloodType": "O-",
+            "bloodRequired": 5,
+            "severity": "critical",
+            "specialtyRequired": "Trauma Surgeon"
+          },
+          {
+            "id": "CAS-TEST-002",
+            "accidentId": "ACC-TEST-001",
+            "bloodType": "O-",
+            "bloodRequired": 3,
+            "severity": "urgent",
+            "specialtyRequired": "Orthopedic Surgeon"
+          }
+        ],
+        
+        "mathematical_verification": {
+          "total_blood_needed": "5 + 3 = 8 liters O-",
+          "hospital_1_has": "4 liters O- (INSUFFICIENT, shortage of 4L)",
+          "hospital_2_has": "20 liters O- (SUFFICIENT)",
+          "ambulance_to_hospital_1_distance": "Verify using Haversine: should be ~15km",
+          "hospital_1_to_hospital_2_distance": "Verify using Haversine: should be 5-7km"
         }
-      ]
+      },
+      
+      "task": {
+        "instruction": "Generate complete JSON entries for hospitals.json, ambulances.json, active_accidents.json, casualties.json, and submissions.json",
+        "validation_required": [
+          "Calculate actual distance from ambulance to Hospital 1 using Haversine",
+          "Calculate actual distance from Hospital 1 to Hospital 2 using Haversine",
+          "Verify Hospital 1 has less than 8L O-",
+          "Verify Hospital 2 has at least 15L O-",
+          "Ensure all coordinates are in Pokhara area (latitude ~28.X, longitude ~84.X)"
+        ]
+      }
     },
+    
     {
       "phase": 5,
-      "name": "Casualty Reporting & Hospital Assignment",
-      "tasks": [
-        {
-          "task_id": "5.1",
-          "description": "Create casualty reporting endpoint",
-          "deliverables": [
-            "backend/src/controllers/casualtyController.js"
-          ],
-          "endpoints": [
-            {
-              "method": "POST",
-              "path": "/api/casualties/report",
-              "description": "Ambulance reports casualties at scene",
-              "request_body": {
-                "ambulanceName": "ambulance ID",
-                "accidentId": "submission/accident ID",
-                "casualties": [
-                  {
-                    "bloodType": "A+, B-, etc",
-                    "bloodRequired": "liters needed",
-                    "severity": "critical/urgent/stable",
-                    "specialtyRequired": "Cardiologist, etc"
-                  }
-                ]
-              },
-              "logic": [
-                "Generate unique IDs for each casualty",
-                "Save all casualties to casualties.json",
-                "Link casualties to accidentId",
-                "Return casualty IDs"
-              ],
-              "response": {
-                "success": true,
-                "casualties": "array of created casualty objects with IDs"
-              }
-            }
-          ],
-          "validation": "Casualty reporting working"
-        },
-        {
-          "task_id": "5.2",
-          "description": "Create hospital matching algorithm",
-          "deliverables": [
-            "backend/src/controllers/hospitalController.js",
-            "backend/src/utils/hospitalMatcher.js"
-          ],
-          "endpoints": [
-            {
-              "method": "POST",
-              "path": "/api/hospitals/find-optimal",
-              "description": "Find optimal hospital for casualties",
-              "request_body": {
-                "ambulanceLocation": {
-                  "latitude": "number",
-                  "longitude": "number"
-                },
-                "casualties": [
-                  {
-                    "bloodType": "string",
-                    "bloodRequired": "number",
-                    "severity": "string",
-                    "specialtyRequired": "string"
-                  }
-                ]
-              },
-              "logic": [
-                "Get all hospitals",
-                "For each hospital calculate score based on:",
-                "  - Distance from ambulance (closer = better)",
-                "  - Blood availability (has required types and amounts)",
-                "  - Specialist availability (has required specialists)",
-                "  - Beds available",
-                "Score formula: bloodMatch (40%) + specialistMatch (30%) + distanceScore (20%) + bedScore (10%)",
-                "Return hospital with highest score"
-              ],
-              "response": {
-                "success": true,
-                "hospital": "optimal hospital object",
-                "distance": "distance in km",
-                "route": {
-                  "destination": "hospital location",
-                  "latitude": "number",
-                  "longitude": "number"
-                },
-                "matchDetails": {
-                  "bloodAvailability": "boolean",
-                  "specialistAvailable": "boolean",
-                  "bedsAvailable": "number"
-                }
-              }
-            },
-            {
-              "method": "GET",
-              "path": "/api/hospitals",
-              "description": "Get all hospitals",
-              "response": "Array of hospitals (without passwords)"
-            },
-            {
-              "method": "GET",
-              "path": "/api/hospitals/:id",
-              "description": "Get hospital by ID",
-              "response": "Hospital object (without password)"
-            }
-          ],
-          "validation": "Hospital matching returns sensible results"
-        },
-        {
-          "task_id": "5.3",
-          "description": "Create ambulance arrival and completion endpoint",
-          "deliverables": [
-            "Update backend/src/controllers/ambulanceController.js"
-          ],
-          "endpoints": [
-            {
-              "method": "POST",
-              "path": "/api/ambulances/:name/arrived-hospital",
-              "description": "Ambulance marks arrival at hospital",
-              "request_body": {
-                "hospitalId": "number",
-                "casualties": "array of casualty IDs delivered"
-              },
-              "logic": [
-                "Update ambulance status to 'active'",
-                "Clear currentCasualtyId",
-                "Update casualties status to 'transported'",
-                "Update hospital blood inventory (subtract used blood)",
-                "Add ambulance to hospital's incomingAmbulances (remove after delivery)"
-              ],
-              "response": {
-                "success": true,
-                "message": "Delivery completed, ambulance now active"
-              }
-            }
-          ],
-          "validation": "Ambulance status updates correctly"
-        },
-        {
-          "task_id": "5.4",
-          "description": "Create hospital routes",
-          "deliverables": [
-            "backend/src/routes/hospitalRoutes.js"
-          ],
-          "validation": "Hospital routes working"
-        }
-      ]
+      "name": "Generate Data Flow Documentation",
+      "description": "Create comprehensive documentation explaining every variable, data flow, and API interaction",
+      
+      "documentation_requirements": {
+        "file_name": "DATA_FLOW_DOCUMENTATION.md",
+        "sections": [
+          {
+            "section": "1. System Overview",
+            "content": [
+              "Brief description of emergency response system",
+              "Three main scenarios",
+              "User roles (Guest, Ambulance, Hospital)"
+            ]
+          },
+          {
+            "section": "2. Data Structures",
+            "content": [
+              "Complete explanation of each JSON file",
+              "Every field in each data structure",
+              "Field types and constraints",
+              "Example entries"
+            ],
+            "subsections": [
+              "2.1 hospitals.json - Explain every field (id, name, password, email, bloodInventory structure, staffCount structure, etc.)",
+              "2.2 ambulances.json - Explain name, password, location, status, currentCasualtyId",
+              "2.3 submissions.json - Explain guest reports structure",
+              "2.4 active_accidents.json - Explain accident tracking",
+              "2.5 casualties.json - Explain casualty records",
+              "2.6 blood_requests.json - Explain blood transfer requests"
+            ]
+          },
+          {
+            "section": "3. Scenario 1 Data Flow",
+            "content": "Step-by-step data flow with variable tracking",
+            "steps": [
+              "3.1 Guest Submission: Variables: title, image (base64), location, latitude, longitude → Creates: submissionId, status='pending'",
+              "3.2 Nearest Ambulance Search: Input: casualty lat/lng → Process: filter status='active', calculate distances → Output: nearest ambulance",
+              "3.3 Ambulance Assignment: Updates: ambulance.status='busy', ambulance.currentCasualtyId=accidentId, accident.assignedAmbulance=ambulanceName",
+              "3.4 Proximity Check: Input: ambulance position, destination position → Process: calculate distance in meters → Output: showReachedButton (boolean)",
+              "3.5 Casualty Reporting: Input: numberOfCasualties, casualties array → Creates: casualty records with IDs",
+              "3.6 Hospital Matching: Input: casualties, ambulance location → Process: calculate blood needs, check availability, score hospitals → Output: optimal hospital",
+              "3.7 Blood Availability Check: Variables: requiredBlood (type, liters), hospital.bloodInventory → Output: sufficient (boolean), shortage details",
+              "3.8 Hospital Delivery: Updates: ambulance.status='active', casualties.status='transported', hospital.bloodInventory (subtract used blood)"
+            ]
+          },
+          {
+            "section": "4. Scenario 3 Data Flow (Blood Transfer)",
+            "content": "Detailed blood transfer flow with mathematical calculations",
+            "steps": [
+              "4.1 Insufficient Blood Detection: Check hospital.bloodInventory[bloodType] < requiredLiters → Show 'Ask for Help' button",
+              "4.2 Blood Request Creation: Input: fromHospitalId, bloodType, litersNeeded → Process: find hospitals within 50km, check availability → Output: blood request, targetHospital",
+              "4.3 Blood Request Approval: Updates: request.status='approved', hospital.bloodInventory (subtract), ambulance.status='busy'",
+              "4.4 Blood Delivery: Updates: hospital.bloodInventory (add), ambulance.status='active', request.status='completed'",
+              "4.5 Mathematical Example: Hospital 1 needs 8L O-, has 4L (shortage: 4L) → Hospital 2 has 20L → Transfer 8L → Hospital 2: 12L remaining, Hospital 1: 12L total"
+            ]
+          },
+          {
+            "section": "5. Variable Glossary",
+            "content": "Alphabetical list of ALL variables used in the system with explanations",
+            "example_format": [
+              "accidentId: Unique identifier for accident (format: ACC-XXXXX or SUB-XXXXX)",
+              "assignedAmbulance: Name of ambulance assigned to accident (string or null)",
+              "bedsAvailable: Number of available beds in hospital (integer)",
+              "bloodInventory: Object containing total liters and array of blood types",
+              "bloodRequired: Amount of blood needed for casualty in liters (number)",
+              "bloodType: Blood type (A+, A-, B+, B-, O+, O-, AB+, AB-)",
+              "currentCasualtyId: ID of accident/request ambulance is currently handling (string or null)",
+              "distanceKm: Distance between two points in kilometers (number)",
+              "latitude: Geographic latitude in decimal degrees (number, range: -90 to 90)",
+              "litersNeeded: Amount of blood needed in blood request (number)",
+              "longitude: Geographic longitude in decimal degrees (number, range: -180 to 180)",
+              "severity: Urgency level (critical/urgent/stable)",
+              "specialtyRequired: Medical specialty needed (e.g., Trauma Surgeon, Cardiologist)",
+              "status: Current state - for ambulances (active/busy), for casualties (pending/transported), for requests (pending/approved/completed)",
+              "AND ALL OTHER VARIABLES..."
+            ]
+          },
+          {
+            "section": "6. API Endpoints Reference",
+            "content": "List of all endpoints with request/response formats",
+            "format": "Method, Path, Purpose, Request Body, Response, Variables Modified"
+          },
+          {
+            "section": "7. Mathematical Calculations",
+            "content": [
+              "7.1 Haversine Distance Formula: Explanation and formula",
+              "7.2 Blood Availability Calculation: How to aggregate casualties by blood type",
+              "7.3 Hospital Scoring Algorithm: Weights and calculation method",
+              "7.4 Proximity Detection: Converting km to meters, threshold checking"
+            ]
+          }
+        ]
+      }
     },
+    
     {
       "phase": 6,
-      "name": "Scenario 2 - Ambulance Receives Call",
-      "tasks": [
+      "name": "Supabase Database Schema Design",
+      "description": "Design Supabase PostgreSQL schema to replace JSON file storage",
+      
+      "deliverable": "SUPABASE_SCHEMA.sql file with complete database schema",
+      
+      "tables_required": [
         {
-          "task_id": "6.1",
-          "description": "Create manual call reporting endpoint",
-          "deliverables": [
-            "Update backend/src/controllers/ambulanceController.js"
+          "table_name": "hospitals",
+          "columns": [
+            "id SERIAL PRIMARY KEY",
+            "name VARCHAR(255) NOT NULL",
+            "password VARCHAR(255) NOT NULL",
+            "email VARCHAR(255) UNIQUE NOT NULL",
+            "phone VARCHAR(20)",
+            "address TEXT",
+            "location VARCHAR(255)",
+            "latitude DECIMAL(10, 8) NOT NULL",
+            "longitude DECIMAL(11, 8) NOT NULL",
+            "ambulance_count INTEGER DEFAULT 0",
+            "beds_available INTEGER DEFAULT 0",
+            "blood_inventory JSONB NOT NULL",
+            "staff_count JSONB NOT NULL",
+            "created_at TIMESTAMP DEFAULT NOW()",
+            "updated_at TIMESTAMP DEFAULT NOW()"
           ],
-          "endpoints": [
-            {
-              "method": "POST",
-              "path": "/api/ambulances/:name/manual-call",
-              "description": "Ambulance driver manually reports receiving a call",
-              "request_body": {
-                "location": "address string",
-                "latitude": "number",
-                "longitude": "number",
-                "description": "brief description"
-              },
-              "logic": [
-                "Create new entry in submissions.json with call details",
-                "Also create in active_accidents.json",
-                "Automatically assign this ambulance to the case",
-                "Set ambulance status to 'busy'",
-                "Return case details and route"
-              ],
-              "response": {
-                "success": true,
-                "caseId": "generated ID",
-                "route": {
-                  "destination": "casualty location",
-                  "latitude": "number",
-                  "longitude": "number"
-                }
-              }
-            }
-          ],
-          "note": "After this, the flow is same as scenario 1: report casualties, find hospital, deliver, mark complete",
-          "validation": "Manual call reporting creates case and assigns ambulance"
-        }
-      ]
-    },
-    {
-      "phase": 7,
-      "name": "Scenario 3 - Inter-Hospital Blood Transfer",
-      "tasks": [
-        {
-          "task_id": "7.1",
-          "description": "Create blood request system",
-          "deliverables": [
-            "backend/src/controllers/bloodRequestController.js"
-          ],
-          "endpoints": [
-            {
-              "method": "POST",
-              "path": "/api/blood-requests/create",
-              "description": "Hospital requests blood from another hospital",
-              "request_body": {
-                "fromHospitalId": "requesting hospital ID",
-                "bloodType": "A+, B-, etc",
-                "litersNeeded": "number",
-                "reason": "optional description"
-              },
-              "logic": [
-                "Find nearest hospital with required blood type and amount",
-                "Check if within reasonable distance (e.g., 50km)",
-                "Create blood request with status 'pending'",
-                "Add to blood_requests.json",
-                "Add to target hospital's bloodRequests array in hospitals.json"
-              ],
-              "response": {
-                "success": true,
-                "request": "blood request object",
-                "targetHospital": "hospital that has the blood"
-              }
-            },
-            {
-              "method": "POST",
-              "path": "/api/blood-requests/:requestId/approve",
-              "description": "Hospital approves blood transfer request",
-              "request_body": {
-                "hospitalId": "approving hospital ID"
-              },
-              "logic": [
-                "Update request status to 'approved'",
-                "Find nearest available ambulance to approving hospital",
-                "Assign ambulance to blood transfer",
-                "Calculate route: approving hospital -> requesting hospital",
-                "Update ambulance status to 'busy'",
-                "Reduce blood inventory at approving hospital"
-              ],
-              "response": {
-                "success": true,
-                "ambulance": "assigned ambulance",
-                "route": {
-                  "from": "approving hospital location",
-                  "to": "requesting hospital location"
-                }
-              }
-            },
-            {
-              "method": "POST",
-              "path": "/api/blood-requests/:requestId/reject",
-              "description": "Hospital rejects blood transfer request",
-              "request_body": {
-                "hospitalId": "rejecting hospital ID",
-                "reason": "optional reason"
-              },
-              "logic": [
-                "Update request status to 'rejected'",
-                "Remove from hospital's pending requests"
-              ],
-              "response": {
-                "success": true,
-                "message": "Request rejected"
-              }
-            },
-            {
-              "method": "POST",
-              "path": "/api/blood-requests/:requestId/complete",
-              "description": "Mark blood transfer as completed",
-              "request_body": {
-                "ambulanceName": "ambulance that delivered"
-              },
-              "logic": [
-                "Update request status to 'completed'",
-                "Add blood to requesting hospital inventory",
-                "Update ambulance status to 'active'",
-                "Clear ambulance assignment"
-              ],
-              "response": {
-                "success": true,
-                "message": "Blood transfer completed"
-              }
-            },
-            {
-              "method": "GET",
-              "path": "/api/hospitals/:id/blood-requests",
-              "description": "Get pending blood requests for a hospital",
-              "response": {
-                "success": true,
-                "requests": "array of pending blood requests"
-              }
-            }
-          ],
-          "validation": "Blood request flow working end-to-end"
+          "indexes": [
+            "CREATE INDEX idx_hospitals_location ON hospitals USING gist (ll_to_earth(latitude, longitude));",
+            "CREATE INDEX idx_hospitals_email ON hospitals(email);"
+          ]
         },
         {
-          "task_id": "7.2",
-          "description": "Create blood request routes",
-          "deliverables": [
-            "backend/src/routes/bloodRequestRoutes.js"
+          "table_name": "ambulances",
+          "columns": [
+            "id SERIAL PRIMARY KEY",
+            "name VARCHAR(50) UNIQUE NOT NULL",
+            "password VARCHAR(255) NOT NULL",
+            "latitude DECIMAL(10, 8) NOT NULL",
+            "longitude DECIMAL(11, 8) NOT NULL",
+            "status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'busy'))",
+            "current_casualty_id VARCHAR(50)",
+            "created_at TIMESTAMP DEFAULT NOW()",
+            "updated_at TIMESTAMP DEFAULT NOW()"
           ],
-          "validation": "Routes connected"
-        }
-      ]
-    },
-    {
-      "phase": 8,
-      "name": "Hospital Dashboard Data",
-      "tasks": [
-        {
-          "task_id": "8.1",
-          "description": "Create hospital dashboard endpoints",
-          "deliverables": [
-            "Update backend/src/controllers/hospitalController.js"
-          ],
-          "endpoints": [
-            {
-              "method": "GET",
-              "path": "/api/hospitals/:id/dashboard",
-              "description": "Get comprehensive dashboard data for hospital",
-              "response": {
-                "success": true,
-                "hospital": "hospital details",
-                "incomingAmbulances": "array of ambulances heading to this hospital",
-                "bloodRequests": "pending blood requests",
-                "stats": {
-                  "totalBeds": "number",
-                  "availableBeds": "number",
-                  "totalBlood": "total liters",
-                  "ambulancesIncoming": "count"
-                }
-              }
-            },
-            {
-              "method": "PUT",
-              "path": "/api/hospitals/:id/update-inventory",
-              "description": "Manually update hospital blood inventory",
-              "request_body": {
-                "bloodType": "A+, B-, etc",
-                "liters": "number to add/subtract (positive or negative)"
-              },
-              "logic": "Update specific blood type inventory",
-              "response": {
-                "success": true,
-                "updatedInventory": "new blood inventory object"
-              }
-            }
-          ],
-          "validation": "Dashboard data returns correctly"
-        }
-      ]
-    },
-    {
-      "phase": 9,
-      "name": "Integration & Testing",
-      "tasks": [
-        {
-          "task_id": "9.1",
-          "description": "Update main server to include all routes",
-          "deliverables": [
-            "Update backend/src/server.js"
-          ],
-          "routes_to_include": [
-            "/api/auth -> authRoutes",
-            "/api/submissions -> submissionRoutes",
-            "/api/ambulances -> ambulanceRoutes",
-            "/api/casualties -> casualtyRoutes (new file)",
-            "/api/hospitals -> hospitalRoutes",
-            "/api/blood-requests -> bloodRequestRoutes"
-          ],
-          "validation": "All routes accessible"
+          "indexes": [
+            "CREATE INDEX idx_ambulances_status ON ambulances(status);",
+            "CREATE INDEX idx_ambulances_location ON ambulances USING gist (ll_to_earth(latitude, longitude));"
+          ]
         },
         {
-          "task_id": "9.2",
-          "description": "Create API documentation file",
-          "deliverables": [
-            "backend/API_DOCUMENTATION.md"
-          ],
-          "content": "Document all endpoints with request/response examples",
-          "validation": "Documentation complete"
+          "table_name": "submissions",
+          "columns": [
+            "id VARCHAR(50) PRIMARY KEY",
+            "title VARCHAR(255) NOT NULL",
+            "image TEXT",
+            "location VARCHAR(255)",
+            "latitude DECIMAL(10, 8) NOT NULL",
+            "longitude DECIMAL(11, 8) NOT NULL",
+            "accuracy DECIMAL(10, 2)",
+            "status VARCHAR(20) DEFAULT 'pending'",
+            "assigned_ambulance VARCHAR(50) REFERENCES ambulances(name)",
+            "created_at TIMESTAMP DEFAULT NOW()"
+          ]
         },
         {
-          "task_id": "9.3",
-          "description": "Create startup instructions",
-          "deliverables": [
-            "backend/README.md"
-          ],
-          "content": [
-            "Installation steps",
-            "How to run the server",
-            "Environment variables needed",
-            "API endpoint overview",
-            "Frontend integration notes"
-          ],
-          "validation": "README clear and complete"
-        }
-      ]
-    },
-    {
-      "phase": 10,
-      "name": "Frontend Integration Guide",
-      "tasks": [
-        {
-          "task_id": "10.1",
-          "description": "Create frontend integration file",
-          "deliverables": [
-            "backend/FRONTEND_INTEGRATION.md"
-          ],
-          "content": {
-            "api_base_url": "http://localhost:5000 (configurable)",
-            "scenario_1_flow": [
-              "Guest submits accident: POST /api/submissions",
-              "Frontend polls: GET /api/ambulances/nearest?lat=X&lng=Y",
-              "Assign ambulance: POST /api/ambulances/{name}/assign",
-              "Ambulance updates location: PUT /api/ambulances/{name}/location",
-              "Ambulance reports casualties: POST /api/casualties/report",
-              "Find hospital: POST /api/hospitals/find-optimal",
-              "Complete delivery: POST /api/ambulances/{name}/arrived-hospital"
-            ],
-            "scenario_2_flow": [
-              "Ambulance gets call: POST /api/ambulances/{name}/manual-call",
-              "Then follow same flow as scenario 1 from casualty reporting"
-            ],
-            "scenario_3_flow": [
-              "Hospital needs blood: POST /api/blood-requests/create",
-              "Target hospital sees request: GET /api/hospitals/{id}/blood-requests",
-              "Approve request: POST /api/blood-requests/{requestId}/approve",
-              "Ambulance delivers: POST /api/blood-requests/{requestId}/complete"
-            ],
-            "replacing_local_json": "Replace api.js fetch calls to local JSON with fetch to backend API endpoints"
-          },
-          "validation": "Integration guide clear"
+          "table_name": "active_accidents",
+          "columns": [
+            "id VARCHAR(50) PRIMARY KEY",
+            "title VARCHAR(255) NOT NULL",
+            "location VARCHAR(255)",
+            "latitude DECIMAL(10, 8) NOT NULL",
+            "longitude DECIMAL(11, 8) NOT NULL",
+            "severity VARCHAR(20) CHECK (severity IN ('critical', 'urgent', 'stable'))",
+            "image TEXT",
+            "status VARCHAR(20) DEFAULT 'active'",
+            "assigned_ambulance VARCHAR(50) REFERENCES ambulances(name)",
+            "time VARCHAR(50)",
+            "created_at TIMESTAMP DEFAULT NOW()"
+          ]
         },
         {
-          "task_id": "10.2",
-          "description": "Create sample api.js for frontend",
-          "deliverables": [
-            "backend/sample-frontend-api.js"
+          "table_name": "casualties",
+          "columns": [
+            "id VARCHAR(50) PRIMARY KEY",
+            "accident_id VARCHAR(50) NOT NULL",
+            "blood_type VARCHAR(5) NOT NULL",
+            "blood_required DECIMAL(10, 2) NOT NULL",
+            "severity VARCHAR(20) CHECK (severity IN ('critical', 'urgent', 'stable'))",
+            "specialty_required VARCHAR(100)",
+            "hospital_assigned INTEGER REFERENCES hospitals(id)",
+            "status VARCHAR(20) DEFAULT 'pending'",
+            "created_at TIMESTAMP DEFAULT NOW()"
           ],
-          "content": "JavaScript file showing how to replace local JSON calls with API calls",
-          "validation": "Sample code provided"
+          "indexes": [
+            "CREATE INDEX idx_casualties_accident ON casualties(accident_id);",
+            "CREATE INDEX idx_casualties_blood_type ON casualties(blood_type);"
+          ]
+        },
+        {
+          "table_name": "blood_requests",
+          "columns": [
+            "id VARCHAR(50) PRIMARY KEY",
+            "from_hospital_id INTEGER REFERENCES hospitals(id) NOT NULL",
+            "to_hospital_id INTEGER REFERENCES hospitals(id) NOT NULL",
+            "blood_type VARCHAR(5) NOT NULL",
+            "liters_needed DECIMAL(10, 2) NOT NULL",
+            "status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'completed'))",
+            "distance_km DECIMAL(10, 2)",
+            "ambulance_assigned VARCHAR(50) REFERENCES ambulances(name)",
+            "reason TEXT",
+            "created_at TIMESTAMP DEFAULT NOW()",
+            "approved_at TIMESTAMP",
+            "completed_at TIMESTAMP"
+          ],
+          "indexes": [
+            "CREATE INDEX idx_blood_requests_status ON blood_requests(status);",
+            "CREATE INDEX idx_blood_requests_hospitals ON blood_requests(from_hospital_id, to_hospital_id);"
+          ]
         }
+      ],
+      
+      "additional_sql": [
+        "-- Enable PostGIS extension for geographic queries",
+        "CREATE EXTENSION IF NOT EXISTS cube;",
+        "CREATE EXTENSION IF NOT EXISTS earthdistance;",
+        "",
+        "-- Function to calculate distance between two points",
+        "CREATE OR REPLACE FUNCTION calculate_distance(lat1 DECIMAL, lon1 DECIMAL, lat2 DECIMAL, lon2 DECIMAL)",
+        "RETURNS DECIMAL AS $$",
+        "BEGIN",
+        "  RETURN earth_distance(",
+        "    ll_to_earth(lat1, lon1),",
+        "    ll_to_earth(lat2, lon2)",
+        "  ) / 1000; -- Returns distance in km",
+        "END;",
+        "$$ LANGUAGE plpgsql;",
+        "",
+        "-- Function to update updated_at timestamp",
+        "CREATE OR REPLACE FUNCTION update_updated_at_column()",
+        "RETURNS TRIGGER AS $$",
+        "BEGIN",
+        "  NEW.updated_at = NOW();",
+        "  RETURN NEW;",
+        "END;",
+        "$$ LANGUAGE plpgsql;",
+        "",
+        "-- Triggers for updated_at",
+        "CREATE TRIGGER update_hospitals_updated_at BEFORE UPDATE ON hospitals",
+        "  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();",
+        "",
+        "CREATE TRIGGER update_ambulances_updated_at BEFORE UPDATE ON ambulances",
+        "  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();"
+      ],
+      
+      "notes": [
+        "Use JSONB for flexible nested structures (blood_inventory, staff_count)",
+        "Add indexes for frequently queried fields (location, status)",
+        "Use PostGIS/earthdistance for geographic queries",
+        "Add foreign key constraints for data integrity",
+        "Include timestamps for audit trail"
       ]
     }
   ],
   
+  "execution_order": {
+    "step_1": "Phase 1 - Implement blood transfer mathematical logic",
+    "step_2": "Phase 2 - Add proximity checking for 'Reached?' button",
+    "step_3": "Phase 3 - Implement photo storage and retrieval",
+    "step_4": "Phase 4 - Generate test data with mathematical validation",
+    "step_5": "Phase 5 - Create comprehensive data flow documentation",
+    "step_6": "Phase 6 - Design Supabase database schema",
+    "confirmation_required": "After each phase, STOP and ask for user confirmation before proceeding"
+  },
+  
   "critical_requirements": {
-    "data_persistence": "Use JSON files for all data storage",
-    "authentication": "Simple password matching, no hashing required",
-    "password_storage": "Passwords stored in same JSON files as other data",
-    "distance_calculation": "Use Haversine formula for accuracy",
-    "hospital_matching": "Weighted scoring based on blood, specialists, distance, beds",
-    "ambulance_visibility": "Busy ambulances not shown to other accidents",
-    "real_time_updates": "Ambulance location updates frequently",
-    "error_handling": "All endpoints must have try-catch and return proper error messages"
+    "blood_math": "All blood calculations must be mathematically accurate (addition/subtraction)",
+    "distance_calculations": "Use Haversine formula, convert km to meters where needed",
+    "data_integrity": "All JSON updates must maintain referential integrity",
+    "error_handling": "Every endpoint must have try-catch and return proper errors",
+    "validation": "Validate coordinates are in Pokhara area, blood types are valid, etc.",
+    "documentation": "Every variable must be documented in data flow doc",
+    "supabase_schema": "Schema must support all current JSON functionality"
   },
   
   "success_criteria": {
-    "scenario_1": "Guest can report accident, ambulance gets assigned, reports casualties, hospital chosen, delivery completed",
-    "scenario_2": "Ambulance can manually log call and follow same flow",
-    "scenario_3": "Hospital can request blood, another hospital approves, ambulance delivers",
-    "data_integrity": "All JSON files maintain correct structure",
-    "api_responses": "All endpoints return consistent JSON format {success, data/error, message}",
-    "frontend_compatible": "API responses match what frontend expects"
-  },
-  
-  "execution_notes": {
-    "approach": "Build one phase at a time",
-    "testing": "Test each endpoint after creation",
-    "validation": "Verify JSON data updates correctly",
-    "missing_data_handling": "If critical data missing from provided JSON, AI should add reasonable defaults",
-    "sample_data": "Create 5-8 ambulances, 3-5 hospitals minimum for testing"
+    "phase_1": "Blood transfer works mathematically: Hospital A needs 8L, has 4L → requests from Hospital B (has 20L) → Hospital B approves → Hospital A receives 8L (now has 12L), Hospital B has 12L remaining",
+    "phase_2": "When ambulance is within 10 meters, proximity check returns showReachedButton=true",
+    "phase_3": "Guest photo stored as base64 and ambulance can retrieve it",
+    "phase_4": "Test data validates: distances correct, blood math works, all scenarios testable",
+    "phase_5": "Documentation explains every variable and data flow clearly",
+    "phase_6": "Supabase schema supports all operations currently done with JSON"
   }
 }
