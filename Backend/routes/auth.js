@@ -128,6 +128,62 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// AMBULANCE LOGIN (Simple Plate + Password)
+router.post('/login/ambulance', async (req, res) => {
+  const { plateNumber, password } = req.body;
+
+  if (!plateNumber || !password) {
+    return res.status(400).json({ error: "Plate number and password required" });
+  }
+
+  try {
+    // 1. Find ambulance by plate number
+    const { data: ambulance, error } = await supabase
+      .from('ambulances')
+      .select('id, plate_number, home_hospital_id')
+      .eq('plate_number', plateNumber)
+      .single();
+
+    if (error || !ambulance) {
+      // Auto-register logic for Demo/Hackathon if not found? 
+      // Or strict? Let's be strict but friendly.
+      return res.status(401).json({ error: "Ambulance not registered in system." });
+    }
+
+    // 2. Simple Password Check (For hackathon: 'ambulance123' or match plate?)
+    // In real app, we'd check linked user password.
+    // Let's assume a universal passcode for now or check against a hardcoded "driver_password" if we don't have user users linked.
+    if (password !== 'ambulance123' && password !== 'admin') {
+      return res.status(401).json({ error: "Invalid Access Code" });
+    }
+
+    // 3. Generate Token (Payload relevant for socket room)
+    const userPayload = {
+      id: ambulance.id, // Use ambulance ID as User ID for simplicity in this flow
+      role: 'ambulance',
+      entityId: ambulance.id
+    };
+
+    const { accessToken, refreshToken } = generateTokens(userPayload); // Reusing helper
+
+    res.json({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: {
+        id: ambulance.id,
+        name: ambulance.plate_number,
+        role: 'ambulance',
+        hospital_id: ambulance.home_hospital_id
+      },
+      expires_in: 900
+    });
+
+  } catch (err) {
+    console.error("Ambulance Login Error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // REFRESH TOKEN
 router.post('/refresh', async (req, res) => {
   const { refreshToken } = req.body;

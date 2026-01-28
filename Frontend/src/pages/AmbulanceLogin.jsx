@@ -37,13 +37,11 @@ export default function AmbulanceLogin() {
         setError("");
 
         try {
-            const response = await fetch(`${API_URL}/auth/login`, {
+            const response = await fetch(`${API_URL}/auth/login/ambulance`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                // For ambulances, we might need a specific mapping or just use email/password from the DB
-                // The user mentioned "login data from username and the password"
                 body: JSON.stringify({
-                    email: `${plateNumber.replace(/\s+/g, '').toLowerCase()}@ambulance.com`,
+                    plateNumber: plateNumber,
                     password: password
                 })
             });
@@ -58,7 +56,10 @@ export default function AmbulanceLogin() {
             localStorage.setItem("user", JSON.stringify(data.user));
             localStorage.setItem("adminAuth", "true");
             localStorage.setItem("userType", "ambulance");
-            localStorage.setItem("hospitalRef", hospitals[hospitalIndex]?.name);
+            // Hospital ref is less relevant now or comes from user object
+            if (data.user.hospital_id) {
+                localStorage.setItem("hospitalRef", data.user.hospital_id);
+            }
 
             navigate("/ambulance");
         } catch (err) {
@@ -93,50 +94,6 @@ export default function AmbulanceLogin() {
                                 {error}
                             </div>
                         )}
-
-                        <div className="space-y-3">
-                            <label className="text-xs font-black uppercase tracking-widest text-gray-400 px-1">Organization Type</label>
-                            <div className="grid grid-cols-3 gap-2 p-1 bg-gray-50 rounded-xl">
-                                {["government", "private", "ngo"].map((type) => (
-                                    <button
-                                        key={type}
-                                        type="button"
-                                        onClick={() => { setOrgType(type); setHospitalIndex(0); }}
-                                        className={`py-2 px-1 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${orgType === type
-                                            ? "bg-primary text-white shadow-md shadow-primary/20"
-                                            : "text-gray-400 hover:text-primary"
-                                            }`}
-                                    >
-                                        {type}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <label className="text-xs font-black uppercase tracking-widest text-gray-400 px-1 flex justify-between">
-                                <span>Base Hospital</span>
-                                <span className="text-primary">{filteredHospitals.length > 0 ? hospitalIndex + 1 : 0}/{filteredHospitals.length}</span>
-                            </label>
-                            <div className="p-4 bg-background-light rounded-2xl border border-gray-100">
-                                <div className="text-center py-2 h-16 flex flex-col justify-center">
-                                    <p className="font-bold text-primary truncate">
-                                        {selectedHospital?.name || "No hospitals found"}
-                                    </p>
-                                    <p className="text-[10px] text-gray-400 truncate">
-                                        {selectedHospital?.address || "Try a different type"}
-                                    </p>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max={Math.max(0, filteredHospitals.length - 1)}
-                                    value={hospitalIndex}
-                                    onChange={(e) => setHospitalIndex(parseInt(e.target.value))}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary mt-4"
-                                />
-                            </div>
-                        </div>
 
                         <div className="space-y-4 pt-2">
                             <div className="relative group">

@@ -3,6 +3,24 @@ const router = express.Router();
 const supabase = require('../supabaseClient');
 const fs = require('fs');
 
+// LIST ACTIVE INCIDENTS
+// GET /api/incidents
+router.get('/', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('incidents')
+            .select('*')
+            .in('status', ['pending', 'assigned'])
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        res.json(data);
+    } catch (err) {
+        console.error("Error fetching incidents:", err.message);
+        res.status(500).json({ error: "Failed to fetch incidents" });
+    }
+});
+
 // UPDATE INCIDENT
 // PATCH /api/incidents/:id
 router.patch('/:id', async (req, res) => {
@@ -113,8 +131,46 @@ router.post('/', async (req, res) => {
 
         if (error) throw error;
 
-        // 5. Smart Dispatch: Find Nearest Hospital
+        // 5. Smart Dispatch: Find Nearest Ambulances & Hospital
         try {
+            // A. Find Nearest Ambulances (New Logic)
+            const { data: nearbyAmbulances, error: ambError } = await supabase.rpc('find_nearest_ambulances', {
+                lat: location.latitude,
+                lng: location.longitude,
+                lim: 5 // Notify top 5 nearest
+            });
+
+            const io = require('../utils/socketManager').getIO();
+
+            if (!ambError && nearbyAmbulances && nearbyAmbulances.length > 0) {
+                console.log(`🚑 Dispatching to ${nearbyAmbulances.length} nearby units.`);
+
+                // Broadcast to specific ambulance rooms
+                nearbyAmbulances.forEach(amb => {
+                    if (amb.id) {
+                        // Check threshold if requirement is strict (e.g. 10km = 10000m)
+                        // For now, we notify the top 5 regardless, or filtered by distance in SQL
+                        if (amb.dist_meters < 10000) {
+                            console.log(`   -> Alerting ${amb.plate_number} (${Math.round(amb.dist_meters)}m away)`);
+                            io.to(`ambulance-${amb.id}`).emit('ambulance:emergency', {
+                                incident: data,
+                                ai_analysis: aiResult,
+                                distance: amb.dist_meters
+                            });
+                        }
+                    }
+                });
+            } else {
+                console.warn("⚠️ No nearby ambulances found via RPC.");
+                // Fallback: Broadcast global emergency just in case? 
+                io.emit('ambulance:emergency', {
+                    incident: data,
+                    ai_analysis: aiResult,
+                    note: "Global Broadcast - No unit nearby"
+                });
+            }
+
+            // B. Find Nearest Hospital (Keep existing logic for Hospital Dashboard)
             const { data: nearestHospitals, error: geoError } = await supabase.rpc('find_nearest_hospitals', {
                 lat: location.latitude,
                 lng: location.longitude,
@@ -123,10 +179,7 @@ router.post('/', async (req, res) => {
 
             if (!geoError && nearestHospitals && nearestHospitals.length > 0) {
                 const nearest = nearestHospitals[0];
-                console.log(`🎯 Smart Dispatch: Notifying ${nearest.name}`);
-
-                // 6. Broadcast via Socket.IO
-                const io = require('../utils/socketManager').getIO();
+                console.log(`🏥 Notifying Nearest Hospital: ${nearest.name}`);
 
                 // Alert the hospital room
                 io.to(`hospital-${nearest.id}`).emit('emergency:new', {
@@ -134,22 +187,14 @@ router.post('/', async (req, res) => {
                     ai_analysis: aiResult
                 });
 
-                // Also alert all ambulances linked to this hospital (if any)
-                // Assuming we have a way to match ambulances to hospital rooms or names
-                io.emit('ambulance:emergency', {
-                    hospitalName: nearest.name,
-                    incident: data,
-                    ai_analysis: aiResult
-                });
-
-                // Update incident with assigned hospital
+                // Update incident definition
                 await supabase
                     .from('incidents')
                     .update({ destination_hospital_id: nearest.id })
                     .eq('id', data.id);
             }
         } catch (dispatchErr) {
-            console.error("❌ Smart Dispatch Failed:", dispatchErr.message);
+            console.error("❌ Dispatch Logic Failed:", dispatchErr.message);
         }
 
         // Return the incident data

@@ -52,13 +52,22 @@ function AmbulanceUser() {
       setLoading(true);
       try {
         const [incidentsData, hospitalsData] = await Promise.all([
-          api.get('/submissions', { silent: true }).catch(() => ({ submissions: [] })),
+          api.get('/incidents', { silent: true }).catch(() => ({ data: [] })),
           api.get('/hospitals/map', { silent: true }).catch(() => [])
         ]);
 
         // Handle different response structures gracefully
-        const incidentList = incidentsData.submissions || incidentsData || [];
-        const hospitalList = hospitalsData.hospitals || hospitalsData || [];
+        // api.get returns response object, so we need .data if using axios interceptor returning config/response
+        // But our interceptor returns response. So incidentsData is the response object.
+        // Wait, looking at api.js line 30: return response;
+        // So we need incidentsData.data
+
+        // Actually, let's look at recent api.js.
+        // It returns 'response'.
+        // So result is { data: [...], status: 200, ... }
+
+        const incidentList = incidentsData.data || [];
+        const hospitalList = hospitalsData.data?.hospitals || hospitalsData.data || [];
 
         setIncidents(incidentList);
         setHospitals(hospitalList);
