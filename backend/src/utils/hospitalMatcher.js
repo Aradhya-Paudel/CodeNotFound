@@ -2,13 +2,13 @@ const { calculateDistance } = require("./distanceUtils");
 
 /**
  * Hospital matching weights
- * Blood: 40%, Specialist: 30%, Distance: 20%, Beds: 10%
+ * Blood: 80%, Specialist: 10%, Distance: 5%, Beds: 5%
  */
 const WEIGHTS = {
-  blood: 0.4,
-  specialist: 0.3,
-  distance: 0.2,
-  beds: 0.1,
+  blood: 0.8,
+  specialist: 0.1,
+  distance: 0.05,
+  beds: 0.05,
 };
 
 /**
