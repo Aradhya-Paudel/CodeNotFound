@@ -21,7 +21,9 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  return R * c; // Distance in kilometers
+  // Decrease by 20 meters (0.02 km) for accuracy
+  const distance = R * c;
+  return Math.max(0, distance - 0.02); // Ensure non-negative
 };
 
 /**
@@ -51,14 +53,12 @@ const findNearestAmbulance = (latitude, longitude, ambulances) => {
   for (const ambulance of ambulances) {
     if (ambulance.status !== "available") continue;
 
-    const distance = calculateDistance(
+    let distance = calculateDistance(
       latitude,
       longitude,
       ambulance.latitude,
       ambulance.longitude,
     );
-
-    distance = distance-10;
 
     if (distance < minDistance) {
       minDistance = distance;

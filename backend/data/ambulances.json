@@ -30,10 +30,11 @@
       "password": "emerg@ncy99",
       "latitude": 28.2138,
       "longitude": 83.9879,
-      "status": "available",
+      "status": "dispatched",
       "hospitalId": 2,
       "driverName": "Bikram Gurung",
-      "phone": "+977-98-56034567"
+      "phone": "+977-98-56034567",
+      "currentAccidentId": "ACC-1769622949058"
     },
     {
       "id": "AMB-004",
@@ -41,10 +42,11 @@
       "password": "rescue2024",
       "latitude": 28.2057,
       "longitude": 83.9732,
-      "status": "available",
+      "status": "dispatched",
       "hospitalId": 2,
       "driverName": "Sanjay Rai",
-      "phone": "+977-98-56045678"
+      "phone": "+977-98-56045678",
+      "currentAccidentId": "ACC-1769621058840"
     },
     {
       "id": "AMB-005",
@@ -64,10 +66,11 @@
       "password": "medic@rescue",
       "latitude": 28.2089,
       "longitude": 83.9856,
-      "status": "available",
+      "status": "dispatched",
       "hospitalId": 3,
       "driverName": "Prakash Karki",
-      "phone": "+977-98-56067890"
+      "phone": "+977-98-56067890",
+      "currentAccidentId": "ACC-1769622918920"
     },
     {
       "id": "AMB-007",

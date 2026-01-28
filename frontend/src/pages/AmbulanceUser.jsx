@@ -8,6 +8,7 @@ import {
   updateAmbulanceStatus,
   addCasualty,
   findBestHospital,
+  removeAccident,
 } from "../services/api";
 
 function AmbulanceUser() {
@@ -45,6 +46,20 @@ function AmbulanceUser() {
 
     setUser(userName);
 
+    // Fetch ambulance data by name and store id
+    const fetchAmbulanceData = async () => {
+      try {
+        const res = await getAllAmbulances();
+        if (res.success && Array.isArray(res.data)) {
+          const found = res.data.find((a) => a.name === userName);
+          if (found) setAmbulanceData(found);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchAmbulanceData();
+
     // Only start location tracking after user is set
     if (userName) {
       requestLocationPermission(userName);
@@ -76,8 +91,6 @@ function AmbulanceUser() {
 
     fetchIncidents();
     fetchHospitals();
-
-    // (moved above)
   }, [navigate]);
 
   // Calculate distance in meters using Haversine formula
@@ -92,7 +105,8 @@ function AmbulanceUser() {
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    // Decrease by default of 10 meters, ensure non-negative
+    return Math.max(0, R * c - 30);
   }, []);
 
   // Calculate nearest incident whenever location or incidents change (only if active)
@@ -243,8 +257,9 @@ function AmbulanceUser() {
 
   const postLocationToBackend = async (coords, userNameParam) => {
     try {
-      // Use userNameParam if provided, else fallback to user state
-      const ambulanceId = userNameParam || user;
+      // Use ambulanceData.id if available, else fallback to userNameParam or user
+      const ambulanceId =
+        (ambulanceData && ambulanceData.id) || userNameParam || user;
       await updateAmbulanceLocation(
         ambulanceId,
         coords.latitude,
