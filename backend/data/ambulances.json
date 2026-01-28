@@ -6,10 +6,11 @@
       "password": "ambulance@123",
       "latitude": 28.2109,
       "longitude": 83.9774,
-      "status": "available",
+      "status": "dispatched",
       "hospitalId": 1,
       "driverName": "Ram Bahadur Thapa",
-      "phone": "+977-98-56012345"
+      "phone": "+977-98-56012345",
+      "currentAccidentId": "ACC-1769574428461"
     },
     {
       "id": "AMB-002",

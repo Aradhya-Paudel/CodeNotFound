@@ -202,7 +202,7 @@ function HospitalDashboard() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-                    {hospital.bloodInventory.total.toLocaleString()}
+                    {(hospital.bloodInventory?.total || hospital.bloodInventory?.bloodTypes?.reduce((sum, b) => sum + (b.liters || b.units || 0), 0) || 0).toLocaleString()}
                   </span>
                 </div>
                 <p className="text-slate-600 text-xs mt-2">

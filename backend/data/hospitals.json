@@ -10,33 +10,57 @@
       "location": "Ramghat, Pokhara",
       "latitude": 28.2096,
       "longitude": 83.9856,
-      "ambulanceCount": 12,
+      "ambulanceCount": 9,
       "bedsAvailable": 50,
       "bloodInventory": {
-        "total": 1728,
+        "total": 6,
         "bloodTypes": [
-          { "type": "A+", "units": 450 },
-          { "type": "A-", "units": 45 },
-          { "type": "B+", "units": 320 },
-          { "type": "B-", "units": 84 },
-          { "type": "O+", "units": 560 },
-          { "type": "O-", "units": 12 },
-          { "type": "AB+", "units": 192 },
-          { "type": "AB-", "units": 65 }
+          {
+            "type": "A+",
+            "liters": 3
+          },
+          {
+            "type": "A-",
+            "liters": 2
+          },
+          {
+            "type": "B+",
+            "liters": 1
+          },
+          {
+            "type": "B-",
+            "liters": 0
+          },
+          {
+            "type": "O+",
+            "liters": 0
+          },
+          {
+            "type": "O-",
+            "liters": 0
+          },
+          {
+            "type": "AB+",
+            "liters": 0
+          },
+          {
+            "type": "AB-",
+            "liters": 0
+          }
         ]
       },
       "staffCount": {
-        "Cardiologist": 3,
+        "Cardiologist": 0,
         "Neurologist": 2,
         "Orthopedic Surgeon": 2,
         "General Surgeon": 3,
         "Anesthesiologist": 2,
         "Radiologist": 1,
-        "Oncologist": 2,
+        "Oncologist": 7,
         "Pediatrician": 3,
         "Psychiatrist": 1,
         "Dermatologist": 2,
-        "Gastroenterologist": 1,
+        "Gastroenterologist": 5,
         "Nephrologist": 1,
         "Pulmonologist": 2,
         "Endocrinologist": 1,
@@ -71,14 +95,38 @@
       "bloodInventory": {
         "total": 1250,
         "bloodTypes": [
-          { "type": "A+", "units": 320 },
-          { "type": "A-", "units": 35 },
-          { "type": "B+", "units": 280 },
-          { "type": "B-", "units": 60 },
-          { "type": "O+", "units": 380 },
-          { "type": "O-", "units": 25 },
-          { "type": "AB+", "units": 110 },
-          { "type": "AB-", "units": 40 }
+          {
+            "type": "A+",
+            "units": 320
+          },
+          {
+            "type": "A-",
+            "units": 35
+          },
+          {
+            "type": "B+",
+            "units": 280
+          },
+          {
+            "type": "B-",
+            "units": 60
+          },
+          {
+            "type": "O+",
+            "units": 380
+          },
+          {
+            "type": "O-",
+            "units": 25
+          },
+          {
+            "type": "AB+",
+            "units": 110
+          },
+          {
+            "type": "AB-",
+            "units": 40
+          }
         ]
       },
       "staffCount": {
@@ -126,14 +174,38 @@
       "bloodInventory": {
         "total": 980,
         "bloodTypes": [
-          { "type": "A+", "units": 250 },
-          { "type": "A-", "units": 28 },
-          { "type": "B+", "units": 200 },
-          { "type": "B-", "units": 45 },
-          { "type": "O+", "units": 320 },
-          { "type": "O-", "units": 18 },
-          { "type": "AB+", "units": 85 },
-          { "type": "AB-", "units": 34 }
+          {
+            "type": "A+",
+            "units": 250
+          },
+          {
+            "type": "A-",
+            "units": 28
+          },
+          {
+            "type": "B+",
+            "units": 200
+          },
+          {
+            "type": "B-",
+            "units": 45
+          },
+          {
+            "type": "O+",
+            "units": 320
+          },
+          {
+            "type": "O-",
+            "units": 18
+          },
+          {
+            "type": "AB+",
+            "units": 85
+          },
+          {
+            "type": "AB-",
+            "units": 34
+          }
         ]
       },
       "staffCount": {
@@ -181,14 +253,38 @@
       "bloodInventory": {
         "total": 650,
         "bloodTypes": [
-          { "type": "A+", "units": 180 },
-          { "type": "A-", "units": 20 },
-          { "type": "B+", "units": 140 },
-          { "type": "B-", "units": 30 },
-          { "type": "O+", "units": 200 },
-          { "type": "O-", "units": 10 },
-          { "type": "AB+", "units": 50 },
-          { "type": "AB-", "units": 20 }
+          {
+            "type": "A+",
+            "units": 180
+          },
+          {
+            "type": "A-",
+            "units": 20
+          },
+          {
+            "type": "B+",
+            "units": 140
+          },
+          {
+            "type": "B-",
+            "units": 30
+          },
+          {
+            "type": "O+",
+            "units": 200
+          },
+          {
+            "type": "O-",
+            "units": 10
+          },
+          {
+            "type": "AB+",
+            "units": 50
+          },
+          {
+            "type": "AB-",
+            "units": 20
+          }
         ]
       },
       "staffCount": {
@@ -213,7 +309,12 @@
         "Gynecologist": 1,
         "Emergency Medicine Specialist": 1
       },
-      "specialties": ["General Surgery", "Pediatrics", "ENT", "Emergency"],
+      "specialties": [
+        "General Surgery",
+        "Pediatrics",
+        "ENT",
+        "Emergency"
+      ],
       "isAvailable": true
     },
     {
@@ -231,14 +332,38 @@
       "bloodInventory": {
         "total": 820,
         "bloodTypes": [
-          { "type": "A+", "units": 210 },
-          { "type": "A-", "units": 25 },
-          { "type": "B+", "units": 175 },
-          { "type": "B-", "units": 40 },
-          { "type": "O+", "units": 260 },
-          { "type": "O-", "units": 15 },
-          { "type": "AB+", "units": 70 },
-          { "type": "AB-", "units": 25 }
+          {
+            "type": "A+",
+            "units": 210
+          },
+          {
+            "type": "A-",
+            "units": 25
+          },
+          {
+            "type": "B+",
+            "units": 175
+          },
+          {
+            "type": "B-",
+            "units": 40
+          },
+          {
+            "type": "O+",
+            "units": 260
+          },
+          {
+            "type": "O-",
+            "units": 15
+          },
+          {
+            "type": "AB+",
+            "units": 70
+          },
+          {
+            "type": "AB-",
+            "units": 25
+          }
         ]
       },
       "staffCount": {
@@ -263,7 +388,12 @@
         "Gynecologist": 2,
         "Emergency Medicine Specialist": 2
       },
-      "specialties": ["Cardiac", "Pulmonology", "Gynecology", "Emergency"],
+      "specialties": [
+        "Cardiac",
+        "Pulmonology",
+        "Gynecology",
+        "Emergency"
+      ],
       "isAvailable": true
     }
   ]
