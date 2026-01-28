@@ -120,7 +120,7 @@ function Map({
     ? [ambulanceLocation.latitude, ambulanceLocation.longitude]
     : [28.2096, 83.9856]; // Pokhara fallback
 
-  console.log("Map Center (defaultCenter):", defaultCenter);
+
 
   // Calculate route or use provided geometry
   useEffect(() => {
