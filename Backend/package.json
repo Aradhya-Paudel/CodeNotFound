@@ -28,6 +28,6 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
-    "axios": "^1.13.3"
+    "axios": "^1.13.4"
   }
 }

@@ -99,7 +99,7 @@ function Login() {
     }
   };
 
-  const handleVisibilitychange = (e) => {
+  const handleVisibilitychange = () => {
     setPasswordVisible(!passwordVisible);
   };
 

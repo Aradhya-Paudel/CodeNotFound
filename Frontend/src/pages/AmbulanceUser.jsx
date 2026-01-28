@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 import Map from "../components/Map";
+import api from "../services/api"; // Ensure api utility is used
 
 function AmbulanceUser() {
   const navigate = useNavigate();
@@ -31,6 +33,7 @@ function AmbulanceUser() {
   const [nearestHospital, setNearestHospital] = useState(null);
   const [isNavigatingToHospital, setIsNavigatingToHospital] = useState(false);
   const [routeGeometry, setRouteGeometry] = useState(null);
+  const socketRef = useRef(null);
 
   const PROXIMITY_THRESHOLD = 50; // increased threshold for real GPS variance
 
@@ -69,6 +72,33 @@ function AmbulanceUser() {
 
     fetchData();
     requestLocationPermission();
+
+    // Socket.IO Setup
+    const token = localStorage.getItem("token");
+    const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (token) {
+      socketRef.current = io("http://localhost:5000", {
+        auth: { token }
+      });
+
+      socketRef.current.on("ambulance:emergency", (data) => {
+        console.log("📢 New Emergency Broadcast:", data);
+        // Add to incidents list
+        setIncidents(prev => {
+          const exists = prev.find(i => i.id === data.incident.id);
+          if (exists) return prev;
+          return [data.incident, ...prev];
+        });
+
+        // Show an alert if active
+        // (Side list update will handle the visual part)
+      });
+    }
+
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+    };
   }, [navigate]);
 
   // ... (Keep existing calculateDistanceMeters) ...
@@ -596,55 +626,73 @@ function AmbulanceUser() {
                 </p>
               </div>
               <div className="p-4 flex-1 overflow-y-auto">
-                <div className="w-full mb-4 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/50 p-4">
-                  <div className="relative h-32 w-full rounded-lg overflow-hidden mb-3">
-                    <img
-                      alt={nearestIncident.title}
-                      className="w-full h-full object-cover grayscale-[0.3]"
-                      src={nearestIncident.image}
-                    />
-                  </div>
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-sm font-bold text-primary">
-                      {nearestIncident.title}
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-600 mb-2">
-                    <span className="material-symbols-outlined text-lg text-primary">
-                      location_on
-                    </span>
-                    <span className="text-xs font-semibold">
-                      {nearestIncident.location}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] mb-3">
-                    <span className="text-slate-500">
-                      {nearestIncident.time}
-                    </span>
-                    <span className="font-bold text-slate-600">
-                      {nearestIncident.status}
-                    </span>
-                  </div>
-                  <div className="bg-linear-to-r from-blue-50 to-blue-100 rounded-lg p-2 flex items-center justify-between mb-4">
-                    <span className="text-xs font-semibold text-blue-900">
-                      Distance:
-                    </span>
-                    <span className="text-sm font-bold text-blue-600">
-                      {distanceInMeters
-                        ? `${distanceInMeters.toFixed(0)}m`
-                        : "Calculating..."}
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleAcceptIncident}
-                    className="w-full bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined">
-                      directions
-                    </span>
-                    Accept & Navigate
-                  </button>
+                <div className="relative h-40 w-full rounded-lg overflow-hidden mb-3">
+                  <img
+                    alt={nearestIncident.title}
+                    className="w-full h-full object-cover"
+                    src={nearestIncident.image_url || nearestIncident.image}
+                  />
                 </div>
+
+                {/* AI Reasoning Insight */}
+                {nearestIncident.ai_analysis && (
+                  <div className="mb-4 p-3 bg-red-900/5 border border-red-900/20 rounded-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-1">
+                      <span className="material-symbols-outlined text-[14px] text-red-900/40">psychology</span>
+                    </div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-red-900/60 block mb-1">AI Reasoning Assessment</label>
+                    <p className="text-xs font-bold text-red-900/90 leading-relaxed italic">
+                      "{nearestIncident.ai_analysis}"
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${nearestIncident.ai_ambulance_type === 'ALS' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'}`}>
+                        {nearestIncident.ai_ambulance_type || 'BLS'} RECOMMENDED
+                      </div>
+                      <span className="text-[8px] text-red-900/40 font-bold uppercase tracking-tighter">Verified by Gemma-3 AI</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-sm font-bold text-primary">
+                    {nearestIncident.title}
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2 text-slate-600 mb-2">
+                  <span className="material-symbols-outlined text-lg text-primary">
+                    location_on
+                  </span>
+                  <span className="text-xs font-semibold">
+                    {nearestIncident.address || nearestIncident.location}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[10px] mb-3">
+                  <span className="text-slate-500">
+                    {new Date(nearestIncident.created_at).toLocaleTimeString()}
+                  </span>
+                  <span className="font-bold text-slate-600">
+                    {nearestIncident.status}
+                  </span>
+                </div>
+                <div className="bg-linear-to-r from-blue-50 to-blue-100 rounded-lg p-2 flex items-center justify-between mb-4">
+                  <span className="text-xs font-semibold text-blue-900">
+                    Distance:
+                  </span>
+                  <span className="text-sm font-bold text-blue-600">
+                    {distanceInMeters
+                      ? `${distanceInMeters.toFixed(0)}m`
+                      : "Calculating..."}
+                  </span>
+                </div>
+                <button
+                  onClick={handleAcceptIncident}
+                  className="w-full bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-200"
+                >
+                  <span className="material-symbols-outlined">
+                    directions
+                  </span>
+                  Confirm & Start Navigation
+                </button>
               </div>
             </aside>
           ) : ambulanceStatus === "busy" &&
@@ -754,7 +802,7 @@ function AmbulanceUser() {
           </main>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 

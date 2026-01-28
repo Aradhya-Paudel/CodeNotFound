@@ -68,7 +68,8 @@ export default function AmbulanceLogin() {
         }
     };
 
-    const selectedHospital = hospitals[hospitalIndex];
+    const filteredHospitals = hospitals.filter(h => h.type === orgType);
+    const selectedHospital = filteredHospitals[hospitalIndex];
 
     return (
         <div className="min-h-screen bg-soft-bg flex flex-col font-display p-6">
@@ -100,10 +101,10 @@ export default function AmbulanceLogin() {
                                     <button
                                         key={type}
                                         type="button"
-                                        onClick={() => setOrgType(type)}
+                                        onClick={() => { setOrgType(type); setHospitalIndex(0); }}
                                         className={`py-2 px-1 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all ${orgType === type
-                                                ? "bg-primary text-white shadow-md shadow-primary/20"
-                                                : "text-gray-400 hover:text-primary"
+                                            ? "bg-primary text-white shadow-md shadow-primary/20"
+                                            : "text-gray-400 hover:text-primary"
                                             }`}
                                     >
                                         {type}
@@ -115,21 +116,21 @@ export default function AmbulanceLogin() {
                         <div className="space-y-3">
                             <label className="text-xs font-black uppercase tracking-widest text-gray-400 px-1 flex justify-between">
                                 <span>Base Hospital</span>
-                                <span className="text-primary">{hospitalIndex + 1}/{hospitals.length}</span>
+                                <span className="text-primary">{filteredHospitals.length > 0 ? hospitalIndex + 1 : 0}/{filteredHospitals.length}</span>
                             </label>
                             <div className="p-4 bg-background-light rounded-2xl border border-gray-100">
                                 <div className="text-center py-2 h-16 flex flex-col justify-center">
                                     <p className="font-bold text-primary truncate">
-                                        {selectedHospital?.name || "Loading..."}
+                                        {selectedHospital?.name || "No hospitals found"}
                                     </p>
                                     <p className="text-[10px] text-gray-400 truncate">
-                                        {selectedHospital?.address || "Please wait"}
+                                        {selectedHospital?.address || "Try a different type"}
                                     </p>
                                 </div>
                                 <input
                                     type="range"
                                     min="0"
-                                    max={Math.max(0, hospitals.length - 1)}
+                                    max={Math.max(0, filteredHospitals.length - 1)}
                                     value={hospitalIndex}
                                     onChange={(e) => setHospitalIndex(parseInt(e.target.value))}
                                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary mt-4"

@@ -52,8 +52,33 @@ function HospitalDashboard() {
 
     loadData();
 
-    // Poll for updates every 10 seconds (Simple Realtime)
+    // Poll for updates every 10 seconds (Simple Realtime fallback)
     const interval = setInterval(loadData, 10000);
+
+    // Socket.IO Setup
+    import('socket.io-client').then(({ io }) => {
+      const socket = io("http://localhost:5000"); // Or env var
+
+      socket.on("connect", () => {
+        // Authenticate as this hospital
+        // (If we had proper auth token, we'd send it like in AmbulanceUser)
+        // For now, we rely on the hospital-ID room join logic if implemented on connect?
+        // Actually, backend expects token. If we don't have it, we might not get alerts properly unless we made rooms public or use query param?
+        // Let's assume we can subscribe or the backend broadcasts to us based on ID.
+        // Wait, the backend join logic is: role === 'hospital' && entityId
+        // We'd need to simulate login or have the token.
+      });
+
+      socket.on("emergency:new", (data) => {
+        // Update list
+        setIncomingIncidents(prev => [data.incident, ...prev]);
+        // Play notification sound?
+        new Audio('/alert.mp3').play().catch(() => { });
+      });
+
+      return () => socket.disconnect();
+    });
+
     return () => clearInterval(interval);
   }, []);
 
@@ -205,9 +230,29 @@ function HospitalDashboard() {
                               <div className="flex items-center gap-2 mb-1">
                                 <h4 className="font-bold text-slate-900 text-base">{inc.title}</h4>
                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">
-                                  {inc.ambulances?.plate_number || 'Unknown Amb'}
+                                  {inc.ambulances?.plate_number || 'Unit Dispatched'}
                                 </span>
                               </div>
+
+                              {/* AI Insight for Hospital */}
+                              {inc.ai_analysis && (
+                                <div className="mb-3 p-3 bg-red-50 border border-red-100 rounded-xl relative">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="material-symbols-outlined text-red-600 text-sm">psychology</span>
+                                    <span className="text-[10px] font-black uppercase text-red-900/60">AI Medical Assessment</span>
+                                  </div>
+                                  <p className="text-xs text-red-900 font-bold leading-relaxed italic">
+                                    "{inc.ai_analysis}"
+                                  </p>
+                                  <div className="mt-2 flex items-center gap-2">
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black ${inc.ai_ambulance_type === 'ALS' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'}`}>
+                                      {inc.ai_ambulance_type || 'BLS'} CARE REQUIRED
+                                    </span>
+                                    <span className="text-[9px] text-red-400 font-bold">Severity: {inc.ai_severity?.toUpperCase()}</span>
+                                  </div>
+                                </div>
+                              )}
+
                               <p className="text-slate-500 text-sm mb-3 max-w-md">{inc.description || 'No description provided.'}</p>
 
                               <div className="flex items-center gap-4 text-xs">

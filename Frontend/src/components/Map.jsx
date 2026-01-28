@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -110,7 +110,6 @@ function Map({
   ambulanceName,
   incidents = [],
   nearestIncident = null,
-  nearestDistance = null,
   targetHospital = null,
   routePoints = [],
 }) {
@@ -126,17 +125,17 @@ function Map({
   // Calculate route or use provided geometry
   useEffect(() => {
     // 1. Use Server-Provided Geometry (Smart Match)
-    if (routeGeometry) {
+    if (routePoints && routePoints.length > 0) {
       try {
         // GeoJSON is [lng, lat], Leaflet wants [lat, lng]
-        const coordinates = routeGeometry.coordinates || routeGeometry; // Handle if it's the full geometry object or just coords
+        const coordinates = routePoints.coordinates || routePoints; // Handle if it's the full geometry object or just coords
         if (Array.isArray(coordinates)) {
-          const leafletPoints = coordinates.map(p => [p[1], p[0]]);
+          const leafletPoints = coordinates.map(p => Array.isArray(p) ? [p[1], p[0]] : p);
           setRoute(leafletPoints);
           return;
         }
-      } catch (e) {
-        console.warn("Invalid route geometry provided", e);
+      } catch {
+        console.warn("Invalid route geometry provided");
       }
     }
 
@@ -210,7 +209,7 @@ function Map({
     };
 
     calculateRouteWithOSRM();
-  }, [ambulanceLocation, nearestIncident, targetHospital, routeGeometry]);
+  }, [ambulanceLocation, nearestIncident, targetHospital, routePoints]);
 
   const mapCenter = ambulanceLocation
     ? [ambulanceLocation.latitude, ambulanceLocation.longitude]

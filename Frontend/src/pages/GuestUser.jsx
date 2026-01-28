@@ -130,12 +130,59 @@ function GuestUser() {
   };
 
   const submitIncident = async () => {
+    if (!capturedImage || !location) return;
     setLoading(true);
-    // Simulate submission to backend
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      // 1. Get readable address (Optional, using OpenStreetMap)
+      let readableLocation = "Unknown Location";
+      try {
+        const revGeo = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}`);
+        const revData = await revGeo.json();
+        readableLocation = revData.display_name;
+      } catch (e) {
+        console.warn("Reverse geocode failed");
+      }
+
+      // 2. Submit to Backend
+      const response = await fetch("http://localhost:5000/api/incidents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Emergency Alert",
+          description: "Accident reported via guest portal.",
+          location: { latitude: location.lat, longitude: location.lng },
+          address: readableLocation,
+          image: capturedImage
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.is_troll) {
+        // AI detected a prank!
+        setError(data.message || "AI detected a prank! Please don't misuse emergency services.");
+        setLoading(false);
+        return;
+      }
+
+      if (response.ok) {
+        setSubmitted(true);
+        // After successful submission, we can show the AI analysis
+        setNearestAmbulance({
+          name: data.ai_analysis || "Verifying nearest unit...",
+          distance: "Real-time"
+        });
+      } else {
+        throw new Error(data.error || "Failed to submit report");
+      }
+    } catch (err) {
+      console.error("Submission error:", err);
+      setError("System is busy. Please call emergency services directly if this is urgent.");
+    } finally {
       setLoading(false);
-      setSubmitted(true);
-    }, 2000);
+    }
   };
 
   if (submitted) {
