@@ -58,6 +58,8 @@ const findNearestAmbulance = (latitude, longitude, ambulances) => {
       ambulance.longitude,
     );
 
+    distance = distance-10;
+
     if (distance < minDistance) {
       minDistance = distance;
       nearest = {
