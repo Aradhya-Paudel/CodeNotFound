@@ -25,7 +25,7 @@ function HospitalDashboard() {
       try {
         // Get hospital name from localStorage (set during login)
         const userName = localStorage.getItem("userName");
-        
+
         // Try to get from localStorage first (set during login)
         const cachedData = localStorage.getItem("hospitalData");
         if (cachedData) {
@@ -33,10 +33,10 @@ function HospitalDashboard() {
           setLoading(false);
           return;
         }
-        
+
         // Otherwise fetch from API
         const result = await getHospitalByName(userName);
-        
+
         if (result.success && result.data) {
           setHospital(result.data);
           localStorage.setItem("hospitalData", JSON.stringify(result.data));
@@ -74,19 +74,21 @@ function HospitalDashboard() {
       <div className="flex h-screen overflow-hidden">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
-        
+
         {/* Sidebar */}
-        <aside className={`
+        <aside
+          className={`
           fixed lg:static inset-y-0 left-0 z-50
           w-64 border-r border-slate-200 bg-white flex flex-col shrink-0
           transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}>
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        `}
+        >
           <div className="p-4 sm:p-6 border-b border-slate-200 flex items-center gap-3">
             <div className="bg-primary p-2 rounded-lg text-white">
               <span className="material-symbols-outlined block">emergency</span>
@@ -99,7 +101,7 @@ function HospitalDashboard() {
                 Emergency Hub
               </p>
             </div>
-            <button 
+            <button
               className="lg:hidden p-1 hover:bg-slate-100 rounded"
               onClick={() => setSidebarOpen(false)}
             >
@@ -153,7 +155,7 @@ function HospitalDashboard() {
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <header className="h-14 sm:h-16 border-b border-slate-200 bg-white px-4 sm:px-8 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3 sm:gap-6 flex-1">
-              <button 
+              <button
                 className="lg:hidden p-2 hover:bg-slate-100 rounded-lg"
                 onClick={() => setSidebarOpen(true)}
               >
@@ -202,7 +204,14 @@ function HospitalDashboard() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-                    {hospital.bloodInventory.total.toLocaleString()}
+                    {(
+                      hospital.bloodInventory?.total ||
+                      hospital.bloodInventory?.bloodTypes?.reduce(
+                        (sum, b) => sum + (b.liters || b.units || 0),
+                        0,
+                      ) ||
+                      0
+                    ).toLocaleString()}
                   </span>
                 </div>
                 <p className="text-slate-600 text-xs mt-2">
@@ -248,7 +257,9 @@ function HospitalDashboard() {
                       <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] font-bold">
                         <tr>
                           <th className="px-4 sm:px-6 py-3">Blood Type</th>
-                          <th className="px-4 sm:px-6 py-3">In-Stock (Liters)</th>
+                          <th className="px-4 sm:px-6 py-3">
+                            In-Stock (Liters)
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200">
@@ -258,7 +269,9 @@ function HospitalDashboard() {
                               <td className="px-4 sm:px-6 py-3 sm:py-4 font-bold text-blue-600">
                                 {blood.type}
                               </td>
-                              <td className="px-4 sm:px-6 py-3 sm:py-4">{blood.liters} Liters</td>
+                              <td className="px-4 sm:px-6 py-3 sm:py-4">
+                                {blood.liters} Liters
+                              </td>
                             </tr>
                           ),
                         )}
@@ -267,114 +280,6 @@ function HospitalDashboard() {
                   </div>
                 </section>
               </div>
-              <aside className="space-y-6">
-                <section className="bg-white rounded-xl border border-slate-200 h-fit overflow-hidden">
-                  <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 flex items-center justify-between">
-                    <h3 className="text-slate-900 font-bold text-sm sm:text-base">
-                      Incoming Ambulances
-                    </h3>
-                    <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                  </div>
-                  <div className="p-3 sm:p-4 space-y-3">
-                    {hospital.incomingAmbulances &&
-                      hospital.incomingAmbulances.map((ambulance, index) => (
-                        <div
-                          key={index}
-                          className={`p-3 rounded-lg border-2 ${
-                            index === 0
-                              ? "border-red-300 bg-red-50"
-                              : "border-blue-200 bg-blue-50"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`p-1.5 sm:p-2 rounded-lg ${
-                                  index === 0 ? "bg-red-200" : "bg-blue-200"
-                                }`}
-                              >
-                                <span
-                                  className={`material-symbols-outlined text-base sm:text-lg ${
-                                    index === 0
-                                      ? "text-red-600"
-                                      : "text-blue-600"
-                                  }`}
-                                >
-                                  ambulance
-                                </span>
-                              </div>
-                              <div>
-                                <p
-                                  className={`text-xs sm:text-sm font-bold ${
-                                    index === 0
-                                      ? "text-red-600"
-                                      : "text-blue-600"
-                                  }`}
-                                >
-                                  {ambulance.ambulanceId}
-                                </p>
-                                <p className="text-xs text-slate-600">
-                                  {ambulance.caseType}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <span
-                                className={`inline-block px-2 py-1 rounded text-xs font-bold ${
-                                  index === 0
-                                    ? "bg-red-200 text-red-700"
-                                    : "bg-blue-200 text-blue-700"
-                                }`}
-                              >
-                                P{ambulance.priority}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="mb-2">
-                            <div className="flex justify-between mb-1">
-                              <span className="text-xs text-slate-600">
-                                Progress
-                              </span>
-                              <span
-                                className={`text-xs font-bold ${
-                                  index === 0 ? "text-red-600" : "text-blue-600"
-                                }`}
-                              >
-                              >
-                                {ambulance.progress}%
-                              </span>
-                            </div>
-                            <div className="w-full h-2 bg-slate-300 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full ${
-                                  index === 0 ? "bg-red-500" : "bg-blue-600"
-                                }`}
-                                style={{
-                                  width: `${ambulance.progress}%`,
-                                }}
-                              ></div>
-                            </div>
-                          </div>
-                          <div className="flex justify-between text-xs">
-                            <span className="text-slate-600">
-                              ETA:{" "}
-                              <span className="font-bold text-slate-900">
-                                {ambulance.eta}m
-                              </span>
-                            </span>
-                            <span
-                              className={`font-bold ${
-                                index === 0 ? "text-red-600" : "text-blue-600"
-                              }`}
-                            >
-                              {ambulance.status}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </section>
-              </aside>
             </div>
           </div>
         </main>

@@ -99,8 +99,12 @@ function HospitalInventory() {
       const result = await updateBloodInventory(hospital.id, bloodTypes);
 
       if (result.success) {
-        // Update local storage with new data
-        const updatedHospital = { ...hospital, bloodInventory: { bloodTypes } };
+        // Update local storage with new data (calculate total)
+        const total = bloodTypes.reduce((sum, blood) => sum + blood.liters, 0);
+        const updatedHospital = {
+          ...hospital,
+          bloodInventory: { bloodTypes, total },
+        };
         localStorage.setItem("hospitalData", JSON.stringify(updatedHospital));
         alert("Inventory updated successfully!");
       } else {
