@@ -1,3 +1,16 @@
+/**
+ * Remove accident by ID
+ * @param {string} id - Accident ID
+ * @returns {boolean} Success status
+ */
+const removeAccident = (id) => {
+  const data = readJSON("active_accidents.json");
+  const index = data.accidents.findIndex((a) => a.id === id);
+  if (index === -1) return false;
+  data.accidents.splice(index, 1);
+  writeJSON("active_accidents.json", data);
+  return true;
+};
 const fs = require("fs");
 const path = require("path");
 
@@ -353,6 +366,7 @@ module.exports = {
   getAccidents,
   addAccident,
   updateAccident,
+  removeAccident,
   getAccidentById,
   getCasualties,
   addCasualty,

@@ -1,4 +1,20 @@
 /**
+ * Remove accident by ID
+ * @param {string} id - Accident ID
+ * @returns {Promise<object>} - { success, data, error }
+ */
+export const removeAccident = async (id) => {
+  if (!id) return { success: false, error: "No accident ID provided" };
+  try {
+    const response = await apiRequest(`/accidents/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+    return response;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+/**
  * API Service for Emergency Response System
  * Handles all backend API communications
  * All functions return { success, data, error } format
@@ -678,6 +694,7 @@ export default {
   getPendingAccidents,
   getAccidentById,
   updateAccidentStatus,
+  removeAccident,
   // Casualties
   addCasualty,
   getHospitalRecommendations,

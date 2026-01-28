@@ -1,3 +1,29 @@
+const { removeAccident } = require("../utils/dataAccess");
+/**
+ * Delete accident by ID
+ * DELETE /api/accidents/:id
+ */
+const deleteAccident = (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    return res.status(400).json({
+      success: false,
+      error: "Missing accident ID",
+    });
+  }
+  const removed = removeAccident(id);
+  if (removed) {
+    return res.status(200).json({
+      success: true,
+      message: "Accident deleted successfully",
+    });
+  } else {
+    return res.status(404).json({
+      success: false,
+      error: "Accident not found",
+    });
+  }
+};
 const {
   addAccident,
   getAccidents,
@@ -277,4 +303,5 @@ module.exports = {
   getAccident,
   updateAccidentStatus,
   getPendingAccidents,
+  deleteAccident,
 };

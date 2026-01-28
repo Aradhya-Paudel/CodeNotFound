@@ -6,7 +6,10 @@ const {
   getAccident,
   updateAccidentStatus,
   getPendingAccidents,
+  deleteAccident,
 } = require("../controllers/accidentController");
+// DELETE /api/accidents/:id - Delete accident by ID
+router.delete("/:id", deleteAccident);
 
 // POST /api/accidents/report - Report new accident
 router.post("/report", reportAccident);
