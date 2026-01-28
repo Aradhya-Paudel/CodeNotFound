@@ -155,11 +155,12 @@ function GuestUser() {
         setSubmitted(true);
         setLoading(false);
 
-        // Reset after 3 seconds
+        // Reset after 3 seconds and restart camera
         setTimeout(() => {
           setCapturedImage(null);
           setLocation(null);
           setSubmitted(false);
+          startCameraStream();
         }, 3000);
       } else {
         setError(result.error || "Failed to submit accident report.");

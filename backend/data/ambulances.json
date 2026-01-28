@@ -18,10 +18,11 @@
       "password": "ambu2024pass",
       "latitude": 28.2094,
       "longitude": 83.9815,
-      "status": "available",
+      "status": "dispatched",
       "hospitalId": 1,
       "driverName": "Hari Prasad Sharma",
-      "phone": "+977-98-56023456"
+      "phone": "+977-98-56023456",
+      "currentAccidentId": "ACC-1769578941517"
     },
     {
       "id": "AMB-003",
@@ -51,10 +52,11 @@
       "password": "response123",
       "latitude": 28.2125,
       "longitude": 83.98,
-      "status": "available",
+      "status": "dispatched",
       "hospitalId": 3,
       "driverName": "Deepak Magar",
-      "phone": "+977-98-56056789"
+      "phone": "+977-98-56056789",
+      "currentAccidentId": "ACC-1769578741971"
     },
     {
       "id": "AMB-006",
