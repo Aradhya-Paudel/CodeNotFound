@@ -90,16 +90,14 @@ function HospitalDashboard() {
         `}
         >
           <div className="p-4 sm:p-6 border-b border-slate-200 flex items-center gap-3">
-            <div className="bg-primary p-2 rounded-lg text-white">
-              <span className="material-symbols-outlined block">emergency</span>
+            <div className="rounded-lg text-white w-8 h-8">
+              <img src="../public/logo.webp" className=" rounded-xl" alt="" />
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-primary text-sm font-bold leading-tight truncate">
                 {hospital.name}
               </h1>
-              <p className="text-slate-500 text-xs font-medium">
-                Emergency Hub
-              </p>
+              
             </div>
             <button
               className="lg:hidden p-1 hover:bg-slate-100 rounded"
@@ -162,7 +160,7 @@ function HospitalDashboard() {
                 <span className="material-symbols-outlined">menu</span>
               </button>
               <h2 className="text-primary text-base sm:text-lg font-bold truncate">
-                Hospital Resource Management
+                Amcon
               </h2>
             </div>
             <div className="flex items-center gap-4">

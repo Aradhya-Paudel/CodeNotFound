@@ -153,8 +153,8 @@ function HospitalInventory() {
         `}
         >
           <div className="p-4 sm:p-6 border-b border-slate-200 flex items-center gap-3">
-            <div className="bg-primary p-2 rounded-lg text-white">
-              <span className="material-symbols-outlined block">emergency</span>
+            <div className="rounded-lg text-white w-8 h-8">
+              <img src="../public/logo.webp" className=" rounded-xl" alt="" />
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-primary text-sm font-bold leading-tight truncate">
@@ -225,7 +225,7 @@ function HospitalInventory() {
                 <span className="material-symbols-outlined">menu</span>
               </button>
               <h2 className="text-primary text-base sm:text-lg font-bold truncate">
-                Blood Inventory Management
+                Amcon
               </h2>
             </div>
             <div className="flex items-center gap-4">

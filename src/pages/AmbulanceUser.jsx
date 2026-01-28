@@ -374,10 +374,8 @@ function AmbulanceUser() {
       <div className="flex flex-col h-screen w-full">
         <header className="h-14 md:h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0 shadow-sm z-20">
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="bg-primary p-1.5 rounded-lg">
-              <span className="material-symbols-outlined text-white text-lg md:text-xl">
-                emergency
-              </span>
+            <div className="rounded-lg text-white w-8 h-8">
+              <img src="../public/logo.webp" className=" rounded-xl" alt="" />
             </div>
             <span className="font-bold text-primary tracking-tight text-xs md:text-base">
               EMS Response System

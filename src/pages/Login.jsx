@@ -102,13 +102,11 @@ function Login() {
     <div className="Main bg-background-light min-h-screen flex flex-col font-display">
       <header className="flex items-center justify-between border-b border-solid border-gray-200 bg-white px-4 sm:px-6 md:px-10 py-3 sm:py-4 shadow-sm">
         <div className="flex items-center gap-2 sm:gap-3 text-primary">
-          <div className="size-7 sm:size-8 flex items-center justify-center bg-primary text-white rounded-lg flex-shrink-0">
-            <span className="material-symbols-outlined text-xl sm:text-2xl">
-              medical_services
-            </span>
+          <div className="size-7 sm:size-8 flex items-center justify-center text-white rounded-lg shrink-0">
+            <img src="../public/logo.webp" className=" rounded-xl" alt="" />
           </div>
           <h2 className="text-primary text-base sm:text-lg md:text-xl font-bold leading-tight tracking-tight truncate">
-            Emergency Healthcare System
+            Amcon
           </h2>
         </div>
       </header>
@@ -116,18 +114,16 @@ function Login() {
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100">
           <div className="p-5 sm:p-6 md:p-8">
             <div className="text-center mb-6 sm:mb-8">
-              <h1 className="text-primary text-xl sm:text-2xl font-bold leading-tight mb-2">
-                Healthcare Resource Portal
+              <h1 className="text-primary text-xl sm:text-5xl font-bold leading-tight mb-2">
+                Amcon Login
               </h1>
-              <p className="text-gray-500 text-xs sm:text-sm px-2">
-                Secure Access for Hospital Personnel &amp; EMS Professionals
-              </p>
+              
             </div>
             <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
               {/* Error Message */}
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 sm:p-3 flex items-start sm:items-center gap-2">
-                  <span className="material-symbols-outlined text-red-600 text-base sm:text-lg flex-shrink-0 mt-0.5 sm:mt-0">
+                  <span className="material-symbols-outlined text-red-600 text-base sm:text-lg shrink-0 mt-0.5 sm:mt-0">
                     error
                   </span>
                   <p className="text-red-700 text-xs sm:text-sm font-medium">
@@ -223,7 +219,7 @@ function Login() {
       </main>
       <footer className="py-4 sm:py-6 px-4 sm:px-10 flex justify-center items-center text-[10px] sm:text-xs text-gray-400">
         <div className="flex items-center gap-2 sm:gap-4 text-center">
-          <span>&copy; {currentDate} Emergency Healthcare Network</span>
+          <span>&copy; {currentDate} Amcon</span>
         </div>
       </footer>
     </div>
