@@ -9,7 +9,7 @@ const {
 } = require("../utils/dataAccess");
 const {
   findNearestAmbulance,
-  calculateDistance,
+  calculateDistance ,
   calculateETA,
 } = require("../utils/distanceUtils");
 
@@ -270,6 +270,8 @@ const acceptAssignment = (req, res) => {
       accident.latitude,
       accident.longitude,
     );
+
+    distance = distance -10
     const eta = calculateETA(distance);
 
     // Update ambulance

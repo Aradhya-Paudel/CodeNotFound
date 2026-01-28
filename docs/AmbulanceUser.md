@@ -60,7 +60,7 @@ import Map from "../components/Map";
 
 ```javascript
 const API_ENDPOINT = ""; // Backend API (empty for demo)
-const PROXIMITY_THRESHOLD = 5; // 5 meters
+const PROXIMITY_THRESHOLD = 20; // 5 meters
 ```
 
 ## Key Functions
