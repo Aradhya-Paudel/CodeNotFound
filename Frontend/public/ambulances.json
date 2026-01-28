@@ -1,28 +1,43 @@
 {
   "ambulances": [
     {
-      "plate_number": "GA 1 PA 101",
+      "plate_number": "GA 1 PA 101",        
       "hospital": "Gandaki Medical College",
+      "latitude": 28.2096,
+      "longitude": 83.9856,
+      "status": "available",
       "type": "ALS"
     },
     {
-      "plate_number": "GA 1 PA 102",
+      "plate_number": "GA 1 PA 102",        
       "hospital": "Gandaki Medical College",
+      "latitude": 28.2096,
+      "longitude": 83.9856,
+      "status": "available",
       "type": "BLS"
     },
     {
       "plate_number": "GA 1 PA 201",
       "hospital": "Manipal Teaching Hospital",
+      "latitude": 28.2470,
+      "longitude": 83.9880,
+      "status": "available",
       "type": "ALS"
     },
     {
       "plate_number": "GA 1 PA 202",
       "hospital": "Manipal Teaching Hospital",
+      "latitude": 28.2470,
+      "longitude": 83.9880,
+      "status": "available",
       "type": "BLS"
     },
     {
       "plate_number": "GA 1 PA 301",
       "hospital": "Pokhara Academy of Health Sciences",
+      "latitude": 28.2186,
+      "longitude": 84.0037,
+      "status": "available",
       "type": "ALS"
     }
   ]
