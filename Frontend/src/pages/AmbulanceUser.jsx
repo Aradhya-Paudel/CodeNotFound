@@ -171,6 +171,20 @@ function AmbulanceUser() {
     }
   }, [location, currentIncident, ambulanceStatus, isNavigatingToHospital, calculateDistanceMeters]);
 
+  // Sync Location to Backend for Smart Dispatch
+  useEffect(() => {
+    if (location && locationStatus === "active") {
+      // Debounce this? Or just send every update? 
+      // watchPosition might fire often. Let's send it.
+      api.post('/ambulance/location', {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        heading: location.heading || 0,
+        speed: location.speed || 0
+      }).catch(err => console.warn("Location sync failed:", err.message));
+    }
+  }, [location, locationStatus]);
+
 
   const requestLocationPermission = async () => {
     setLocationStatus("requesting");
@@ -195,7 +209,7 @@ function AmbulanceUser() {
         setLocationError("Location access denied or failed");
         setLocationStatus("error");
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
   };
 

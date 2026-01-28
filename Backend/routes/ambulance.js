@@ -106,14 +106,44 @@ router.post('/trip/start', async (req, res) => {
 // POST /api/ambulance/location
 router.post('/location', async (req, res) => {
     const { latitude, longitude, heading, speed } = req.body;
-    const ambulanceId = req.user.entityId;
+    // Ambulance login uses generic 'user' structure but 'id' is the ambulance ID.
+    // Standard user login uses 'entityId' for linked ambulance.
+    const ambulanceId = req.user.entityId || req.user.id;
 
-    // Emit to socket (handled in socketManager too, but this is REST fallback)
-    // Actually socket connection handles this directly usually.
-    // We'll keep this as a sync endpoint for state if needed.
+    if (!ambulanceId) {
+        return res.status(400).json({ error: "Ambulance ID not found in token" });
+    }
 
-    // Just return success
-    res.json({ success: true });
+    try {
+        const { error } = await supabase
+            .from('ambulances')
+            .update({
+                current_location: `SRID=4326;POINT(${longitude} ${latitude})`,
+                status: 'idle', // Or keep current? Usually 'idle' or 'busy' is managed by trip logic. 
+                // Let's NOT force status reset here, just update location.
+                // But wait, if they just logged in, they might be 'idle'.
+                // Ideally we update last_updated too if column exists.
+            })
+            .eq('id', ambulanceId);
+
+        if (error) throw error;
+
+        // Emit to socket room for admins/hospitals tracking this ambulance
+        socketManager.getIO().to(`ambulance-${ambulanceId}`).emit('ambulance:location', {
+            id: ambulanceId,
+            location: { latitude, longitude },
+            heading,
+            speed
+        });
+
+        // Also broadcast to 'admin' room? 
+        // socketManager.emitToAdmins('ambulance:moved', ...);
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Location Update Error:", err);
+        res.status(500).json({ error: "Failed to update location" });
+    }
 });
 
 // COMPLETE TRIP

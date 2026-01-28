@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -114,6 +114,7 @@ function Map({
   routePoints = [],
 }) {
   const [route, setRoute] = useState([]);
+  const prevRouteParams = useRef({ start: null, end: null });
 
   // Use ambulance location as center, fallback to Pokhara
   const defaultCenter = ambulanceLocation
@@ -142,7 +143,10 @@ function Map({
     // 2. Fallback to OSRM (Client-side)
     const calculateRouteWithOSRM = async () => {
       if (!ambulanceLocation) {
-        setRoute([]);
+        if (prevRouteParams.current.start !== null) {
+          setRoute([]);
+          prevRouteParams.current = { start: null, end: null };
+        }
         return;
       }
 
@@ -169,7 +173,10 @@ function Map({
       }
 
       if (!target) {
-        setRoute([]);
+        if (prevRouteParams.current.end !== null) {
+          setRoute([]);
+          prevRouteParams.current = { start: null, end: null };
+        }
         return;
       }
 
@@ -182,6 +189,21 @@ function Map({
         target.longitude, // OSRM uses [lng, lat]
         target.latitude,
       ];
+
+      // MEMOIZATION CHECK: Prevent infinite loop if coords haven't changed drastically
+      // Using 4 decimal places (approx 11m precision) to ignore micro-drifts
+      const startKey = `${ambulancePos[0].toFixed(4)},${ambulancePos[1].toFixed(4)}`;
+      const endKey = `${targetPos[0].toFixed(4)},${targetPos[1].toFixed(4)}`;
+
+      if (
+        startKey === prevRouteParams.current.start &&
+        endKey === prevRouteParams.current.end
+      ) {
+        // No change in effective coordinates, skip re-fetch & setRoute
+        return;
+      }
+
+      prevRouteParams.current = { start: startKey, end: endKey };
 
       try {
         // Use OSRM public API for routing

@@ -56,6 +56,9 @@ export default function AmbulanceLogin() {
             localStorage.setItem("user", JSON.stringify(data.user));
             localStorage.setItem("adminAuth", "true");
             localStorage.setItem("userType", "ambulance");
+            // Save username (plate number) for Dashboard validation
+            localStorage.setItem("userName", data.user.username || plateNumber);
+
             // Hospital ref is less relevant now or comes from user object
             if (data.user.hospital_id) {
                 localStorage.setItem("hospitalRef", data.user.hospital_id);

@@ -1,0 +1,13 @@
+{"level":"info","message":"Socket connected: bGpt_NmIcnnrbyffAAAC (User: 7c0c52d3-76e3-4b4b-898c-ea31a717bca7, Role: ambulance)","service":"hospital-backend","timestamp":"2026-01-28T01:43:49.613Z"}
+{"level":"info","message":"Socket disconnected: bGpt_NmIcnnrbyffAAAC","service":"hospital-backend","timestamp":"2026-01-28T01:49:43.978Z"}
+{"level":"info","message":"Socket connected: w8tp8BDAhwoa1nrtAAAE (User: 7c0c52d3-76e3-4b4b-898c-ea31a717bca7, Role: ambulance)","service":"hospital-backend","timestamp":"2026-01-28T01:49:44.015Z"}
+{"level":"info","message":"Socket disconnected: w8tp8BDAhwoa1nrtAAAE","service":"hospital-backend","timestamp":"2026-01-28T01:50:55.805Z"}
+{"level":"info","message":"Socket connected: HTTOfb28vwDc2MSqAAAG (User: 7c0c52d3-76e3-4b4b-898c-ea31a717bca7, Role: ambulance)","service":"hospital-backend","timestamp":"2026-01-28T01:50:57.160Z"}
+{"level":"info","message":"Socket disconnected: HTTOfb28vwDc2MSqAAAG","service":"hospital-backend","timestamp":"2026-01-28T01:50:57.185Z"}
+{"level":"info","message":"Socket connected: BdNX9xxxiybbXVOnAAAJ (User: 7c0c52d3-76e3-4b4b-898c-ea31a717bca7, Role: ambulance)","service":"hospital-backend","timestamp":"2026-01-28T01:50:57.520Z"}
+{"level":"info","message":"Socket disconnected: BdNX9xxxiybbXVOnAAAJ","service":"hospital-backend","timestamp":"2026-01-28T01:51:33.923Z"}
+{"level":"info","message":"Socket connected: KECmBK6RUdg7NFBrAAAL (User: 7c0c52d3-76e3-4b4b-898c-ea31a717bca7, Role: ambulance)","service":"hospital-backend","timestamp":"2026-01-28T01:51:37.004Z"}
+{"level":"info","message":"Socket disconnected: KECmBK6RUdg7NFBrAAAL","service":"hospital-backend","timestamp":"2026-01-28T01:52:50.101Z"}
+{"level":"info","message":"Socket connected: 1pDYnTDeXW-6SLjTAAAO (User: 7c0c52d3-76e3-4b4b-898c-ea31a717bca7, Role: ambulance)","service":"hospital-backend","timestamp":"2026-01-28T01:53:02.293Z"}
+{"level":"info","message":"Socket connected: XbyF1tkI3o5kQnd9AAAR (User: 7c0c52d3-76e3-4b4b-898c-ea31a717bca7, Role: ambulance)","service":"hospital-backend","timestamp":"2026-01-28T01:53:30.917Z"}
+{"level":"info","message":"Socket disconnected: XbyF1tkI3o5kQnd9AAAR","service":"hospital-backend","timestamp":"2026-01-28T01:53:37.270Z"}
