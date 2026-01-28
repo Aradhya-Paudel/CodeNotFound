@@ -1,0 +1,18 @@
+{
+    "supabase": {
+        "project_url": "https://grnsfwqhthflphbnlqkg.supabase.co",
+        "publishable_keys": [
+            {
+                "name": "anon",
+                "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdybnNmd3FodGhmbHBoYm5scWtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0OTgwMTcsImV4cCI6MjA4NTA3NDAxN30.373cf4PRtN4wJ4cQOHcdfuBQ4GVwtWwcy1Hm3AYwR_8",
+                "type": "legacy_jwt"
+            },
+            {
+                "name": "default",
+                "key": "sb_publishable_tGuMJoepN3gtQCjDXalSCw_A1uV1fDU",
+                "type": "modern_publishable"
+            }
+        ],
+        "auth_portal": "https://grnsfwqhthflphbnlqkg.supabase.co/auth/v1"
+    }
+}
