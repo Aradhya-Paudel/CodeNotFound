@@ -37,6 +37,7 @@ app.use("/api/ambulances", require("./routes/ambulanceRoutes"));
 app.use("/api/hospitals", require("./routes/hospitalRoutes"));
 app.use("/api/casualties", require("./routes/casualtyRoutes"));
 app.use("/api/blood", require("./routes/bloodRoutes"));
+app.use("/api/blood-alerts", require("./routes/bloodAlertRoutes"));
 
 // 404 handler
 app.use((req, res) => {

@@ -4,13 +4,13 @@
       "id": "AMB-001",
       "name": "MH-02-AB-0001",
       "password": "ambulance@123",
-      "latitude": 28.211139068456063,
-      "longitude": 83.97717580932976,
-      "status": "busy",
+      "latitude": 28.2112667200899,
+      "longitude": 83.97712893641813,
+      "status": "active",
       "hospitalId": 1,
       "driverName": "Ram Bahadur Thapa",
       "phone": "+977-98-56012345",
-      "currentAccidentId": "ACC-1769574428461"
+      "currentAccidentId": null
     },
     {
       "id": "AMB-002",

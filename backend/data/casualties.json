@@ -1,3 +1,73 @@
 {
-  "casualties": []
+  "casualties": [
+    {
+      "id": "CAS-1769654150584",
+      "accidentId": null,
+      "ambulanceName": "MH-02-AB-0001",
+      "name": "Unknown",
+      "age": null,
+      "gender": "Unknown",
+      "injuryType": "Cardiologist",
+      "severity": "Severe",
+      "bloodType": "A+",
+      "bloodUnitsNeeded": 2,
+      "notes": "",
+      "status": "hospital_assigned",
+      "assignedHospital": {
+        "id": 5,
+        "name": "Metro City Hospital",
+        "address": "Chipledhunga, Pokhara-9, Kaski, Nepal",
+        "phone": "+977-61-590123",
+        "distance": 0.76,
+        "eta": 2
+      },
+      "createdAt": "2026-01-29T02:35:50.584Z"
+    },
+    {
+      "id": "CAS-1769654741617",
+      "accidentId": null,
+      "ambulanceName": "MH-02-AB-0001",
+      "name": "Unknown",
+      "age": null,
+      "gender": "Unknown",
+      "injuryType": "Neurologist",
+      "severity": "Critical",
+      "bloodType": "A+",
+      "bloodUnitsNeeded": 2,
+      "notes": "",
+      "status": "hospital_assigned",
+      "assignedHospital": {
+        "id": 5,
+        "name": "Metro City Hospital",
+        "address": "Chipledhunga, Pokhara-9, Kaski, Nepal",
+        "phone": "+977-61-590123",
+        "distance": 0.76,
+        "eta": 2
+      },
+      "createdAt": "2026-01-29T02:45:41.617Z"
+    },
+    {
+      "id": "CAS-1769654804652",
+      "accidentId": null,
+      "ambulanceName": "MH-02-AB-0001",
+      "name": "Unknown",
+      "age": null,
+      "gender": "Unknown",
+      "injuryType": "Neurologist",
+      "severity": "Severe",
+      "bloodType": "B-",
+      "bloodUnitsNeeded": 24,
+      "notes": "",
+      "status": "hospital_assigned",
+      "assignedHospital": {
+        "id": 5,
+        "name": "Metro City Hospital",
+        "address": "Chipledhunga, Pokhara-9, Kaski, Nepal",
+        "phone": "+977-61-590123",
+        "distance": 0.76,
+        "eta": 2
+      },
+      "createdAt": "2026-01-29T02:46:44.652Z"
+    }
+  ]
 }

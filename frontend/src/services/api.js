@@ -662,6 +662,69 @@ export const completeBloodTransfer = async (requestId) => {
   return response;
 };
 
+// ==================== BLOOD ALERTS ====================
+
+/**
+ * Send blood alert to nearest hospital
+ * @param {number} bestHospitalId - ID of the hospital requesting blood
+ * @param {string} bloodType - Blood type needed (e.g., 'A+', 'O-')
+ * @param {number} unitsNeeded - Units of blood required
+ * @param {string} urgency - 'normal' | 'urgent' | 'critical'
+ * @param {object} casualtyInfo - Optional casualty details
+ * @returns {Promise<object>} - { success, data, error }
+ */
+export const sendBloodAlertToNearest = async (bestHospitalId, bloodType, unitsNeeded, urgency = 'urgent', casualtyInfo = null) => {
+  const response = await apiRequest('/blood-alerts/send-alert', {
+    method: 'POST',
+    body: JSON.stringify({
+      bestHospitalId,
+      bloodType,
+      unitsNeeded,
+      urgency,
+      casualtyInfo
+    })
+  });
+  return response;
+};
+
+/**
+ * Get all blood alerts for a hospital
+ * @param {number} hospitalId - Hospital ID
+ * @returns {Promise<object>} - { success, bloodAlerts, pending }
+ */
+export const getBloodAlerts = async (hospitalId) => {
+  const response = await apiRequest(`/blood-alerts/${hospitalId}`);
+  return response;
+};
+
+/**
+ * Accept a blood alert request
+ * @param {number} hospitalId - Hospital ID
+ * @param {string} alertId - Alert ID
+ * @returns {Promise<object>} - { success, alert }
+ */
+export const acceptBloodAlert = async (hospitalId, alertId) => {
+  const response = await apiRequest(`/blood-alerts/${hospitalId}/${alertId}/accept`, {
+    method: 'PATCH'
+  });
+  return response;
+};
+
+/**
+ * Reject a blood alert request
+ * @param {number} hospitalId - Hospital ID
+ * @param {string} alertId - Alert ID
+ * @param {string} reason - Rejection reason
+ * @returns {Promise<object>} - { success, alert }
+ */
+export const rejectBloodAlert = async (hospitalId, alertId, reason = '') => {
+  const response = await apiRequest(`/blood-alerts/${hospitalId}/${alertId}/reject`, {
+    method: 'PATCH',
+    body: JSON.stringify({ reason })
+  });
+  return response;
+};
+
 // ==================== UTILITY ====================
 
 /**
@@ -721,6 +784,11 @@ export default {
   approveBloodRequest,
   declineBloodRequest,
   completeBloodTransfer,
+  // Blood Alerts
+  sendBloodAlertToNearest,
+  getBloodAlerts,
+  acceptBloodAlert,
+  rejectBloodAlert,
   // Utility
   healthCheck,
 };

@@ -1,251 +1,413 @@
 {
-  "task": "Send Blood Alert to Nearest Hospital",
-  "description": "When a hospital needs blood urgently, automatically find the nearest hospital and send them a blood request alert",
+  "project": "Blood Alert System - Complete Implementation Guide",
+  "description": "Find nearest hospital to best hospital, send blood alerts, display in fleet management with accept/reject functionality",
   
-  "implementation_steps": [
-    {
-      "step": 1,
-      "action": "Create New API Endpoint",
-      "file": "backend/src/routes/bloodRequests.js",
-      "method": "POST",
-      "endpoint": "/api/blood-requests/alert-nearest",
-      "description": "Add a new route to handle automatic nearest hospital blood alerts"
-    },
-    {
-      "step": 2,
-      "action": "Create Controller Function",
-      "file": "backend/src/controllers/bloodRequestController.js",
-      "function_name": "alertNearestHospital",
-      "logic": [
-        "Receive request with: hospitalId, bloodType, unitsNeeded, urgency",
-        "Load all hospitals from hospitals.json",
-        "Find requesting hospital by ID",
-        "Use findNearestHospitalToHospital() to get nearest hospital",
-        "Check if nearest hospital has required blood in inventory",
-        "If no blood available, find next nearest hospital with blood",
-        "Create blood request record with auto-generated ID",
-        "Save to bloodRequests.json",
-        "Return success response with nearest hospital details"
-      ]
-    },
-    {
-      "step": 3,
-      "action": "Add Frontend API Function",
-      "file": "src/services/api.js",
-      "function_name": "sendBloodAlertToNearest",
-      "parameters": {
-        "hospitalId": "number - ID of hospital requesting blood",
-        "bloodType": "string - Blood type needed (e.g., 'A+', 'O-')",
-        "unitsNeeded": "number - Liters/units of blood required",
-        "urgency": "string - 'normal' | 'urgent' | 'critical'"
-      },
-      "returns": {
-        "success": "boolean",
-        "bloodRequest": "object - Created blood request",
-        "nearestHospital": "object - Details of nearest hospital",
-        "distance": "number - Distance in km",
-        "bloodAvailable": "boolean - Whether hospital has the blood"
+  "phase_1_analysis": {
+    "title": "CODEBASE ANALYSIS - hospitalMatcher.js",
+    "current_state": {
+      "file": "backend/src/utils/hospitalMatcher.js",
+      "existing_functions": [
+        "findBestHospital() - Finds best hospital for casualty based on weighted scoring",
+        "findNearestHospitalToHospital() - Finds geographically nearest hospital",
+        "rankHospitals() - Returns all hospitals ranked by score",
+        "calculateDistance() - Uses Haversine formula for distance"
+      ],
+      "current_behavior": {
+        "description": "findBestHospital() already calls findNearestHospitalToHospital() but only logs to console",
+        "issue": "Nearest hospital is found but not used for blood alerts",
+        "console_output": "Basic console.log showing nearest hospital found"
       }
     },
-    {
-      "step": 4,
-      "action": "Add UI Component",
-      "file": "src/pages/hospitals/HospitalInventory.jsx",
-      "ui_elements": [
-        "Add 'Request Blood' button in blood inventory section",
-        "Create modal/form to input: blood type, units needed, urgency level",
-        "On submit, call sendBloodAlertToNearest() API",
-        "Show success message with nearest hospital name and distance",
-        "Show error if no nearby hospitals have the blood",
-        "Display pending request status"
-      ]
-    },
-    {
-      "step": 5,
-      "action": "Update Hospital Dashboard",
-      "file": "src/pages/hospitals/HospitalDashboard.jsx",
-      "additions": [
-        "Add 'Incoming Blood Requests' section",
-        "Display pending requests where donorHospitalId matches current hospital",
-        "Show: requesting hospital name, blood type, units, urgency",
-        "Add 'Approve' and 'Reject' buttons",
-        "Call existing approve/reject endpoints on button click"
-      ]
-    }
-  ],
-
-  "required_data_structure": {
-    "request_payload": {
-      "hospitalId": 1,
-      "bloodType": "O-",
-      "unitsNeeded": 5,
-      "urgency": "critical"
-    },
-    "response_payload": {
-      "success": true,
-      "bloodRequest": {
-        "id": "BR-1738157234567",
-        "requestingHospitalId": 1,
-        "donorHospitalId": 2,
-        "bloodType": "O-",
-        "unitsRequested": 5,
-        "urgency": "critical",
-        "status": "pending",
-        "createdAt": "2026-01-29T10:30:00Z"
-      },
-      "nearestHospital": {
-        "id": 2,
-        "name": "Metro Medical Center",
-        "distance": 3.5,
-        "bloodAvailable": true
-      }
+    "required_changes": {
+      "change_1": "Enhanced console logging with detailed formatted output",
+      "change_2": "Return nearest hospital data from findNearestHospitalToHospital()",
+      "change_3": "Attach nearest hospital info to findBestHospital() return value"
     }
   },
 
-  "algorithm_workflow": {
-    "input": {
-      "requesting_hospital": "Hospital object that needs blood",
-      "all_hospitals": "Array of all hospitals from hospitals.json",
-      "blood_type": "Required blood type",
-      "units_needed": "Amount of blood needed"
-    },
-    "process": [
-      {
-        "step": "Filter hospitals",
-        "code": "hospitals.filter(h => h.id !== requestingHospital.id && h.isAvailable !== false)"
-      },
-      {
-        "step": "Find nearest",
-        "code": "findNearestHospitalToHospital(hospitals, requestingHospital)"
-      },
-      {
-        "step": "Check blood availability",
-        "code": "nearestHospital.bloodInventory.bloodTypes.find(bt => bt.type === bloodType && bt.liters >= unitsNeeded)"
-      },
-      {
-        "step": "If not available, find next nearest with blood",
-        "code": "Rank all hospitals by distance, filter by blood availability, select first"
-      },
-      {
-        "step": "Create blood request",
-        "code": "Generate new blood request object with status 'pending'"
-      },
-      {
-        "step": "Save to database",
-        "code": "Append to bloodRequests.json"
-      }
-    ],
-    "output": {
-      "blood_request_created": "New blood request record",
-      "nearest_hospital_found": "Hospital object with distance",
-      "alert_sent": "Notification ready for donor hospital dashboard"
+  "phase_1_implementation": {
+    "title": "UPDATED hospitalMatcher.js",
+    "file_path": "backend/src/utils/hospitalMatcher.js",
+    "complete_code": "const { calculateDistance } = require(\"./distanceUtils\");\n\nconst WEIGHTS = {\n  blood: 0.4,\n  specialist: 0.3,\n  distance: 0.2,\n  beds: 0.1,\n};\n\nconst INJURY_SPECIALIST_MAP = {\n  \"head injury\": \"Neurologist\",\n  \"head trauma\": \"Neurologist\",\n  \"brain injury\": \"Neurologist\",\n  cardiac: \"Cardiologist\",\n  \"heart attack\": \"Cardiologist\",\n  \"chest pain\": \"Cardiologist\",\n  fracture: \"Orthopedic Surgeon\",\n  \"bone injury\": \"Orthopedic Surgeon\",\n  \"broken bone\": \"Orthopedic Surgeon\",\n  \"spinal injury\": \"Orthopedic Surgeon\",\n  burn: \"General Surgeon\",\n  burns: \"General Surgeon\",\n  trauma: \"General Surgeon\",\n  accident: \"Emergency Medicine Specialist\",\n  emergency: \"Emergency Medicine Specialist\",\n  respiratory: \"Pulmonologist\",\n  breathing: \"Pulmonologist\",\n  pediatric: \"Pediatrician\",\n  child: \"Pediatrician\",\n  pregnancy: \"Gynecologist\",\n  maternity: \"Gynecologist\",\n  \"eye injury\": \"Ophthalmologist\",\n  stomach: \"Gastroenterologist\",\n  abdominal: \"Gastroenterologist\",\n  kidney: \"Nephrologist\",\n  skin: \"Dermatologist\",\n  mental: \"Psychiatrist\",\n  ear: \"ENT Specialist\",\n  throat: \"ENT Specialist\",\n  nose: \"ENT Specialist\",\n};\n\nconst getRequiredSpecialist = (injuryType) => {\n  if (!injuryType) return \"Emergency Medicine Specialist\";\n  const lowerInjury = injuryType.toLowerCase();\n  for (const [key, specialist] of Object.entries(INJURY_SPECIALIST_MAP)) {\n    if (lowerInjury.includes(key)) {\n      return specialist;\n    }\n  }\n  return \"Emergency Medicine Specialist\";\n};\n\nconst calculateBloodScore = (hospital, bloodType, unitsNeeded = 0) => {\n  if (!bloodType || unitsNeeded === 0) return 100;\n  const bloodInventory = hospital.bloodInventory?.bloodTypes || [];\n  const bloodData = bloodInventory.find((b) => b.type === bloodType);\n  if (!bloodData) return 0;\n  const availableUnits = bloodData.liters || bloodData.units || 0;\n  if (availableUnits >= unitsNeeded) return 100;\n  if (availableUnits === 0) return 0;\n  return Math.round((availableUnits / unitsNeeded) * 100);\n};\n\nconst calculateSpecialistScore = (hospital, injuryType) => {\n  const requiredSpecialist = getRequiredSpecialist(injuryType);\n  const staffCount = hospital.staffCount || {};\n  const specialistCount = staffCount[requiredSpecialist] || 0;\n  if (specialistCount >= 3) return 100;\n  if (specialistCount === 2) return 80;\n  if (specialistCount === 1) return 50;\n  return 0;\n};\n\nconst calculateDistanceScore = (distance) => {\n  const maxDistance = 50;\n  if (distance <= 1) return 100;\n  if (distance >= maxDistance) return 0;\n  return Math.round(100 - (distance / maxDistance) * 100);\n};\n\nconst calculateBedsScore = (hospital) => {\n  const beds = hospital.bedsAvailable || 0;\n  if (beds >= 20) return 100;\n  if (beds >= 10) return 70;\n  if (beds >= 5) return 40;\n  if (beds >= 1) return 20;\n  return 0;\n};\n\nconst findNearestHospitalToHospital = (hospitals, referenceHospital) => {\n  if (!referenceHospital || !hospitals || hospitals.length === 0) return null;\n  let minDist = Infinity;\n  let nearest = null;\n  hospitals.forEach((hospital) => {\n    if (hospital.id !== referenceHospital.id) {\n      const dist = calculateDistance(\n        referenceHospital.latitude,\n        referenceHospital.longitude,\n        hospital.latitude,\n        hospital.longitude,\n      );\n      if (dist < minDist) {\n        minDist = dist;\n        nearest = hospital;\n      }\n    }\n  });\n  if (nearest) {\n    const distanceKm = Math.round(minDist * 100) / 100;\n    console.log(\"\\n\" + \"=\".repeat(70));\n    console.log(\"🏥 NEAREST HOSPITAL TO BEST HOSPITAL FOUND\");\n    console.log(\"=\".repeat(70));\n    console.log(\"📍 Best/Destination Hospital:\");\n    console.log(`   ID: ${referenceHospital.id}`);\n    console.log(`   Name: ${referenceHospital.name}`);\n    console.log(`   Location: ${referenceHospital.address}`);\n    console.log(\"\");\n    console.log(\"🩸 Nearest Hospital (Blood Donor Candidate):\");\n    console.log(`   ID: ${nearest.id}`);\n    console.log(`   Name: ${nearest.name}`);\n    console.log(`   Address: ${nearest.address}`);\n    console.log(`   Phone: ${nearest.phone}`);\n    console.log(`   📏 Distance: ${distanceKm} km`);\n    console.log(\"=\".repeat(70) + \"\\n\");\n    return {\n      ...nearest,\n      distanceFromBest: distanceKm\n    };\n  }\n  return null;\n};\n\nconst findBestHospital = (hospitals, casualtyInfo, accidentLat, accidentLon) => {\n  const { injuryType, bloodType, bloodUnitsNeeded } = casualtyInfo;\n  const scoredHospitals = hospitals\n    .filter((h) => h.isAvailable !== false && h.bedsAvailable > 0)\n    .map((hospital) => {\n      const distance = calculateDistance(accidentLat, accidentLon, hospital.latitude, hospital.longitude);\n      const bloodScore = calculateBloodScore(hospital, bloodType, bloodUnitsNeeded);\n      const specialistScore = calculateSpecialistScore(hospital, injuryType);\n      const distanceScore = calculateDistanceScore(distance);\n      const bedsScore = calculateBedsScore(hospital);\n      const totalScore =\n        bloodScore * WEIGHTS.blood +\n        specialistScore * WEIGHTS.specialist +\n        distanceScore * WEIGHTS.distance +\n        bedsScore * WEIGHTS.beds;\n      return {\n        hospital: {\n          id: hospital.id,\n          name: hospital.name,\n          address: hospital.address,\n          phone: hospital.phone,\n          latitude: hospital.latitude,\n          longitude: hospital.longitude,\n          bedsAvailable: hospital.bedsAvailable,\n        },\n        scores: {\n          blood: bloodScore,\n          specialist: specialistScore,\n          distance: distanceScore,\n          beds: bedsScore,\n          total: Math.round(totalScore * 100) / 100,\n        },\n        distance: Math.round(distance * 100) / 100,\n        requiredSpecialist: getRequiredSpecialist(injuryType),\n      };\n    });\n  scoredHospitals.sort((a, b) => b.scores.total - a.scores.total);\n  if (scoredHospitals.length > 0) {\n    const best = scoredHospitals[0];\n    const nearestToBest = findNearestHospitalToHospital(hospitals, best.hospital);\n    return {\n      ...best,\n      nearestHospitalForBlood: nearestToBest\n    };\n  }\n  return null;\n};\n\nconst rankHospitals = (hospitals, casualtyInfo, accidentLat, accidentLon) => {\n  const { injuryType, bloodType, bloodUnitsNeeded } = casualtyInfo;\n  const scoredHospitals = hospitals\n    .filter((h) => h.isAvailable !== false)\n    .map((hospital) => {\n      const distance = calculateDistance(accidentLat, accidentLon, hospital.latitude, hospital.longitude);\n      const bloodScore = calculateBloodScore(hospital, bloodType, bloodUnitsNeeded);\n      const specialistScore = calculateSpecialistScore(hospital, injuryType);\n      const distanceScore = calculateDistanceScore(distance);\n      const bedsScore = calculateBedsScore(hospital);\n      const totalScore =\n        bloodScore * WEIGHTS.blood +\n        specialistScore * WEIGHTS.specialist +\n        distanceScore * WEIGHTS.distance +\n        bedsScore * WEIGHTS.beds;\n      return {\n        hospital: {\n          id: hospital.id,\n          name: hospital.name,\n          address: hospital.address,\n          phone: hospital.phone,\n          latitude: hospital.latitude,\n          longitude: hospital.longitude,\n          bedsAvailable: hospital.bedsAvailable,\n        },\n        scores: {\n          blood: bloodScore,\n          specialist: specialistScore,\n          distance: distanceScore,\n          beds: bedsScore,\n          total: Math.round(totalScore * 100) / 100,\n        },\n        distance: Math.round(distance * 100) / 100,\n        requiredSpecialist: getRequiredSpecialist(injuryType),\n      };\n    });\n  scoredHospitals.sort((a, b) => b.scores.total - a.scores.total);\n  return scoredHospitals;\n};\n\nmodule.exports = {\n  WEIGHTS,\n  INJURY_SPECIALIST_MAP,\n  getRequiredSpecialist,\n  calculateBloodScore,\n  calculateSpecialistScore,\n  calculateDistanceScore,\n  calculateBedsScore,\n  findBestHospital,\n  rankHospitals,\n  findNearestHospitalToHospital,\n};",
+    "analysis_after_completion": {
+      "changes_made": [
+        "✅ Enhanced console.log with formatted box display showing both hospitals",
+        "✅ findNearestHospitalToHospital() now returns full hospital object with distanceFromBest property",
+        "✅ findBestHospital() calls findNearestHospitalToHospital() and includes result in return value",
+        "✅ Console output clearly identifies best hospital and nearest hospital for blood requests"
+      ],
+      "test_output_example": "========================================\n🏥 NEAREST HOSPITAL TO BEST HOSPITAL FOUND\n========================================\n📍 Best/Destination Hospital:\n   ID: 1\n   Name: City General Hospital\n   Location: 123 Main Street\n\n🩸 Nearest Hospital (Blood Donor Candidate):\n   ID: 2\n   Name: Metro Medical Center\n   Address: 456 Central Avenue\n   Phone: +977-1-4567891\n   📏 Distance: 3.5 km\n========================================"
     }
   },
 
-  "code_example": {
-    "backend_controller": "backend/src/controllers/bloodRequestController.js",
-    "code": "const alertNearestHospital = async (req, res) => {\n  const { hospitalId, bloodType, unitsNeeded, urgency } = req.body;\n  \n  // Get all hospitals\n  const hospitals = readHospitals();\n  const requestingHospital = hospitals.find(h => h.id === hospitalId);\n  \n  // Find nearest hospital\n  const nearestHospital = findNearestHospitalToHospital(hospitals, requestingHospital);\n  \n  // Check blood availability\n  const bloodAvailable = nearestHospital.bloodInventory.bloodTypes.find(\n    bt => bt.type === bloodType && bt.liters >= unitsNeeded\n  );\n  \n  // Create request\n  const bloodRequest = {\n    id: `BR-${Date.now()}`,\n    requestingHospitalId: hospitalId,\n    donorHospitalId: nearestHospital.id,\n    bloodType,\n    unitsRequested: unitsNeeded,\n    urgency: urgency || 'urgent',\n    status: 'pending',\n    createdAt: new Date().toISOString()\n  };\n  \n  // Save\n  const bloodRequests = readBloodRequests();\n  bloodRequests.push(bloodRequest);\n  writeBloodRequests(bloodRequests);\n  \n  res.json({ success: true, bloodRequest, nearestHospital });\n};"
+  "phase_2_analysis": {
+    "title": "CODEBASE ANALYSIS - hospitals.json",
+    "current_state": {
+      "file": "backend/data/hospitals.json",
+      "current_schema": {
+        "id": "number",
+        "name": "string",
+        "password": "string",
+        "email": "string",
+        "phone": "string",
+        "address": "string",
+        "location": "string",
+        "latitude": "number",
+        "longitude": "number",
+        "ambulanceCount": "number",
+        "bedsAvailable": "number",
+        "bloodInventory": "object with bloodTypes array",
+        "staffCount": "object with specialist counts"
+      },
+      "missing": "bloodAlerts array to store incoming blood requests"
+    },
+    "required_changes": {
+      "change_1": "Add bloodAlerts: [] to each hospital object",
+      "change_2": "bloodAlerts will store requests from hospitals needing blood",
+      "change_3": "Each alert contains: requesting hospital info, blood type, units, urgency, status"
+    }
   },
 
-  "frontend_ui_flow": [
-    {
-      "screen": "Hospital Inventory Page",
-      "action": "Click 'Request Blood' button",
-      "modal": {
-        "title": "Request Blood from Nearest Hospital",
-        "fields": [
+  "phase_2_implementation": {
+    "title": "UPDATED hospitals.json SCHEMA",
+    "file_path": "backend/data/hospitals.json",
+    "blood_alert_object_schema": {
+      "id": "BA-{timestamp} - Unique alert ID",
+      "requestingHospitalId": "number - ID of hospital requesting blood",
+      "requestingHospitalName": "string - Name of requesting hospital",
+      "requestingHospitalPhone": "string - Contact phone",
+      "requestingHospitalAddress": "string - Hospital address",
+      "bloodType": "string - A+, B-, O+, etc.",
+      "unitsRequested": "number - Liters of blood needed",
+      "urgency": "string - normal|urgent|critical",
+      "status": "string - pending|accepted|rejected",
+      "distance": "number - Distance in km from donor hospital",
+      "casualtyDetails": "object - Optional casualty information",
+      "createdAt": "ISO timestamp - When alert was created",
+      "respondedAt": "ISO timestamp - When hospital responded",
+      "responseReason": "string - Optional reason for rejection"
+    },
+    "example_hospital_with_alerts": {
+      "id": 1,
+      "name": "City General Hospital",
+      "password": "hospital123",
+      "email": "citygen@hospital.com",
+      "phone": "+977-1-4567890",
+      "address": "123 Main Street, Kathmandu",
+      "location": "Kathmandu, Nepal",
+      "latitude": 27.7172,
+      "longitude": 85.324,
+      "ambulanceCount": 5,
+      "bedsAvailable": 50,
+      "bloodInventory": {
+        "total": 500,
+        "bloodTypes": [
           {
-            "name": "bloodType",
-            "type": "select",
-            "options": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+            "type": "A+",
+            "liters": 100
           },
           {
-            "name": "unitsNeeded",
-            "type": "number",
-            "min": 1,
-            "placeholder": "Enter units needed"
-          },
-          {
-            "name": "urgency",
-            "type": "select",
-            "options": ["normal", "urgent", "critical"],
-            "default": "urgent"
+            "type": "O-",
+            "liters": 50
           }
-        ],
-        "buttons": ["Cancel", "Send Alert"]
-      }
+        ]
+      },
+      "staffCount": {
+        "Cardiologist": 5,
+        "Neurologist": 3
+      },
+      "bloodAlerts": [
+        {
+          "id": "BA-1738157234567",
+          "requestingHospitalId": 2,
+          "requestingHospitalName": "Metro Medical Center",
+          "requestingHospitalPhone": "+977-1-4567891",
+          "requestingHospitalAddress": "456 Central Avenue",
+          "bloodType": "O-",
+          "unitsRequested": 5,
+          "urgency": "critical",
+          "status": "pending",
+          "distance": 3.5,
+          "casualtyDetails": {
+            "name": "John Doe",
+            "age": 35,
+            "injuryType": "Trauma"
+          },
+          "createdAt": "2026-01-29T10:30:00Z",
+          "respondedAt": null,
+          "responseReason": null
+        }
+      ]
     },
-    {
-      "screen": "After Submit",
-      "success_message": "Blood request sent to [Hospital Name] - Distance: [X] km",
-      "redirect": "Hospital Dashboard to view pending requests"
+    "migration_instructions": {
+      "step_1": "Open backend/data/hospitals.json",
+      "step_2": "Add \"bloodAlerts\": [] to EVERY hospital object",
+      "step_3": "Ensure array is empty initially",
+      "step_4": "Save file with proper JSON formatting"
     },
-    {
-      "screen": "Donor Hospital Dashboard",
-      "notification": "New blood request from [Requesting Hospital]",
-      "display": {
-        "hospital": "Requesting hospital name",
-        "bloodType": "Blood type needed",
-        "units": "Units requested",
-        "urgency": "Badge showing urgency level",
-        "distance": "Distance between hospitals",
-        "actions": ["Approve", "Reject"]
-      }
+    "analysis_after_completion": {
+      "changes_made": [
+        "✅ Added bloodAlerts array to hospital schema",
+        "✅ Defined complete alert object structure",
+        "✅ Ready to receive blood request alerts from other hospitals",
+        "✅ Supports multiple concurrent requests with unique IDs"
+      ]
     }
-  ],
+  },
 
-  "existing_functions_to_use": {
-    "from_hospitalMatcher_js": [
-      "findNearestHospitalToHospital(hospitals, referenceHospital)"
+  "phase_3_analysis": {
+    "title": "CODEBASE ANALYSIS - Backend Controllers & Routes",
+    "current_state": {
+      "existing_files": [
+        "backend/src/controllers/casualtyController.js - Handles casualty management",
+        "backend/src/controllers/hospitalController.js - Handles hospital operations",
+        "backend/src/routes/casualties.js - Casualty routes",
+        "backend/src/routes/hospitals.js - Hospital routes"
+      ],
+      "existing_blood_functionality": {
+        "file": "backend/src/controllers/hospitalController.js",
+        "functions": [
+          "updateBloodInventory() - Updates hospital blood stock",
+          "getHospitalById() - Fetches hospital details"
+        ]
+      },
+      "gap": "No controller/routes for blood alerts system"
+    },
+    "required_changes": {
+      "new_file_1": "backend/src/controllers/bloodAlertController.js",
+      "new_file_2": "backend/src/routes/bloodAlerts.js",
+      "integration": "Register routes in backend/src/index.js or app.js"
+    }
+  },
+
+  "phase_3_implementation": {
+    "title": "BLOOD ALERT CONTROLLER & ROUTES",
+    "file_1": {
+      "path": "backend/src/controllers/bloodAlertController.js",
+      "complete_code": "const fs = require('fs');\nconst path = require('path');\nconst { findNearestHospitalToHospital } = require('../utils/hospitalMatcher');\n\nconst HOSPITALS_FILE = path.join(__dirname, '../../data/hospitals.json');\n\nconst readHospitals = () => {\n  try {\n    const data = fs.readFileSync(HOSPITALS_FILE, 'utf8');\n    return JSON.parse(data).hospitals;\n  } catch (error) {\n    console.error('Error reading hospitals file:', error);\n    return [];\n  }\n};\n\nconst writeHospitals = (hospitals) => {\n  try {\n    const data = { hospitals };\n    fs.writeFileSync(HOSPITALS_FILE, JSON.stringify(data, null, 2), 'utf8');\n    return true;\n  } catch (error) {\n    console.error('Error writing hospitals file:', error);\n    return false;\n  }\n};\n\nconst sendBloodAlertToNearest = async (req, res) => {\n  try {\n    const { bestHospitalId, bloodType, unitsNeeded, urgency, casualtyInfo } = req.body;\n    console.log('\\n🔄 Processing blood alert request...');\n    const hospitals = readHospitals();\n    const bestHospital = hospitals.find(h => h.id === parseInt(bestHospitalId));\n    if (!bestHospital) {\n      return res.status(404).json({ error: 'Best hospital not found' });\n    }\n    const nearestHospitalData = findNearestHospitalToHospital(hospitals, bestHospital);\n    if (!nearestHospitalData) {\n      return res.status(404).json({ error: 'No nearby hospitals found' });\n    }\n    const bloodAlert = {\n      id: `BA-${Date.now()}`,\n      requestingHospitalId: bestHospital.id,\n      requestingHospitalName: bestHospital.name,\n      requestingHospitalPhone: bestHospital.phone,\n      requestingHospitalAddress: bestHospital.address,\n      bloodType: bloodType,\n      unitsRequested: parseFloat(unitsNeeded),\n      urgency: urgency || 'urgent',\n      status: 'pending',\n      distance: nearestHospitalData.distanceFromBest,\n      casualtyDetails: casualtyInfo || null,\n      createdAt: new Date().toISOString(),\n      respondedAt: null,\n      responseReason: null\n    };\n    const nearestHospitalIndex = hospitals.findIndex(h => h.id === nearestHospitalData.id);\n    if (!hospitals[nearestHospitalIndex].bloodAlerts) {\n      hospitals[nearestHospitalIndex].bloodAlerts = [];\n    }\n    hospitals[nearestHospitalIndex].bloodAlerts.push(bloodAlert);\n    writeHospitals(hospitals);\n    console.log('✅ Blood alert sent successfully');\n    res.json({\n      success: true,\n      message: 'Blood alert sent successfully',\n      alert: bloodAlert,\n      nearestHospital: {\n        id: nearestHospitalData.id,\n        name: nearestHospitalData.name,\n        distance: nearestHospitalData.distanceFromBest\n      }\n    });\n  } catch (error) {\n    console.error('❌ Error:', error);\n    res.status(500).json({ error: 'Failed to send blood alert' });\n  }\n};\n\nconst getBloodAlerts = async (req, res) => {\n  try {\n    const { hospitalId } = req.params;\n    const hospitals = readHospitals();\n    const hospital = hospitals.find(h => h.id === parseInt(hospitalId));\n    if (!hospital) {\n      return res.status(404).json({ error: 'Hospital not found' });\n    }\n    const bloodAlerts = hospital.bloodAlerts || [];\n    res.json({\n      success: true,\n      bloodAlerts: bloodAlerts,\n      pending: bloodAlerts.filter(a => a.status === 'pending').length\n    });\n  } catch (error) {\n    res.status(500).json({ error: 'Failed to fetch blood alerts' });\n  }\n};\n\nconst acceptBloodAlert = async (req, res) => {\n  try {\n    const { hospitalId, alertId } = req.params;\n    const hospitals = readHospitals();\n    const hospitalIndex = hospitals.findIndex(h => h.id === parseInt(hospitalId));\n    if (hospitalIndex === -1) {\n      return res.status(404).json({ error: 'Hospital not found' });\n    }\n    const hospital = hospitals[hospitalIndex];\n    const alertIndex = hospital.bloodAlerts.findIndex(a => a.id === alertId);\n    if (alertIndex === -1) {\n      return res.status(404).json({ error: 'Blood alert not found' });\n    }\n    const alert = hospital.bloodAlerts[alertIndex];\n    alert.status = 'accepted';\n    alert.respondedAt = new Date().toISOString();\n    const bloodTypeIndex = hospital.bloodInventory.bloodTypes.findIndex(bt => bt.type === alert.bloodType);\n    if (bloodTypeIndex !== -1) {\n      hospital.bloodInventory.bloodTypes[bloodTypeIndex].liters -= alert.unitsRequested;\n      hospital.bloodInventory.total -= alert.unitsRequested;\n    }\n    hospitals[hospitalIndex] = hospital;\n    writeHospitals(hospitals);\n    console.log(`✅ Blood alert ${alertId} accepted by hospital ${hospitalId}`);\n    res.json({\n      success: true,\n      message: 'Blood alert accepted',\n      alert: alert\n    });\n  } catch (error) {\n    res.status(500).json({ error: 'Failed to accept blood alert' });\n  }\n};\n\nconst rejectBloodAlert = async (req, res) => {\n  try {\n    const { hospitalId, alertId } = req.params;\n    const { reason } = req.body;\n    const hospitals = readHospitals();\n    const hospitalIndex = hospitals.findIndex(h => h.id === parseInt(hospitalId));\n    if (hospitalIndex === -1) {\n      return res.status(404).json({ error: 'Hospital not found' });\n    }\n    const hospital = hospitals[hospitalIndex];\n    const alertIndex = hospital.bloodAlerts.findIndex(a => a.id === alertId);\n    if (alertIndex === -1) {\n      return res.status(404).json({ error: 'Blood alert not found' });\n    }\n    const alert = hospital.bloodAlerts[alertIndex];\n    alert.status = 'rejected';\n    alert.respondedAt = new Date().toISOString();\n    alert.responseReason = reason || 'No reason provided';\n    hospitals[hospitalIndex] = hospital;\n    writeHospitals(hospitals);\n    console.log(`❌ Blood alert ${alertId} rejected by hospital ${hospitalId}`);\n    res.json({\n      success: true,\n      message: 'Blood alert rejected',\n      alert: alert\n    });\n  } catch (error) {\n    res.status(500).json({ error: 'Failed to reject blood alert' });\n  }\n};\n\nmodule.exports = {\n  sendBloodAlertToNearest,\n  getBloodAlerts,\n  acceptBloodAlert,\n  rejectBloodAlert\n};"
+    },
+    "file_2": {
+      "path": "backend/src/routes/bloodAlerts.js",
+      "complete_code": "const express = require('express');\nconst router = express.Router();\nconst {\n  sendBloodAlertToNearest,\n  getBloodAlerts,\n  acceptBloodAlert,\n  rejectBloodAlert\n} = require('../controllers/bloodAlertController');\n\nrouter.post('/send-alert', sendBloodAlertToNearest);\nrouter.get('/:hospitalId', getBloodAlerts);\nrouter.patch('/:hospitalId/:alertId/accept', acceptBloodAlert);\nrouter.patch('/:hospitalId/:alertId/reject', rejectBloodAlert);\n\nmodule.exports = router;"
+    },
+    "file_3": {
+      "path": "backend/src/index.js or backend/src/app.js",
+      "code_to_add": "// Add this import at the top\nconst bloodAlertRoutes = require('./routes/bloodAlerts');\n\n// Add this route registration\napp.use('/api/blood-alerts', bloodAlertRoutes);"
+    },
+    "api_endpoints_created": {
+      "POST_/api/blood-alerts/send-alert": {
+        "description": "Send blood alert to nearest hospital",
+        "body": {
+          "bestHospitalId": 1,
+          "bloodType": "O-",
+          "unitsNeeded": 5,
+          "urgency": "critical",
+          "casualtyInfo": {
+            "name": "John Doe",
+            "age": 35
+          }
+        },
+        "response": {
+          "success": true,
+          "alert": "alert object",
+          "nearestHospital": "hospital details"
+        }
+      },
+      "GET_/api/blood-alerts/:hospitalId": {
+        "description": "Get all blood alerts for a hospital",
+        "response": {
+          "success": true,
+          "bloodAlerts": "array of alerts",
+          "pending": "count of pending alerts"
+        }
+      },
+      "PATCH_/api/blood-alerts/:hospitalId/:alertId/accept": {
+        "description": "Accept blood alert and reduce inventory",
+        "response": {
+          "success": true,
+          "alert": "updated alert object"
+        }
+      },
+      "PATCH_/api/blood-alerts/:hospitalId/:alertId/reject": {
+        "description": "Reject blood alert with reason",
+        "body": {
+          "reason": "Insufficient stock"
+        },
+        "response": {
+          "success": true,
+          "alert": "updated alert object"
+        }
+      }
+    },
+    "analysis_after_completion": {
+      "changes_made": [
+        "✅ Created bloodAlertController.js with 4 main functions",
+        "✅ sendBloodAlertToNearest() - Creates alert and stores in nearest hospital's bloodAlerts array",
+        "✅ getBloodAlerts() - Fetches all alerts for a hospital",
+        "✅ acceptBloodAlert() - Accepts alert and reduces blood inventory automatically",
+        "✅ rejectBloodAlert() - Rejects alert with optional reason",
+        "✅ Created routes file with RESTful endpoints",
+        "✅ All functions read/write directly to hospitals.json"
+      ]
+    }
+  },
+
+  "phase_4_analysis": {
+    "title": "CODEBASE ANALYSIS - Frontend API Layer",
+    "current_state": {
+      "file": "src/services/api.js",
+      "existing_functions": [
+        "login functions",
+        "hospital management functions",
+        "casualty functions",
+        "ambulance functions"
+      ],
+      "gap": "No API functions for blood alerts"
+    },
+    "required_changes": {
+      "add_functions": [
+        "sendBloodAlertToNearest()",
+        "getBloodAlerts()",
+        "acceptBloodAlert()",
+        "rejectBloodAlert()"
+      ]
+    }
+  },
+
+  "phase_4_implementation": {
+    "title": "FRONTEND API FUNCTIONS",
+    "file_path": "src/services/api.js",
+    "code_to_add": "// Blood Alert Functions\nexport const sendBloodAlertToNearest = async (bestHospitalId, bloodType, unitsNeeded, urgency, casualtyInfo = null) => {\n  const response = await fetch(`${API_BASE_URL}/blood-alerts/send-alert`, {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      bestHospitalId,\n      bloodType,\n      unitsNeeded,\n      urgency,\n      casualtyInfo\n    })\n  });\n  return response.json();\n};\n\nexport const getBloodAlerts = async (hospitalId) => {\n  const response = await fetch(`${API_BASE_URL}/blood-alerts/${hospitalId}`);\n  return response.json();\n};\n\nexport const acceptBloodAlert = async (hospitalId, alertId) => {\n  const response = await fetch(`${API_BASE_URL}/blood-alerts/${hospitalId}/${alertId}/accept`, {\n    method: 'PATCH',\n    headers: { 'Content-Type': 'application/json' }\n  });\n  return response.json();\n};\n\nexport const rejectBloodAlert = async (hospitalId, alertId, reason = '') => {\n  const response = await fetch(`${API_BASE_URL}/blood-alerts/${hospitalId}/${alertId}/reject`, {\n    method: 'PATCH',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ reason })\n  });\n  return response.json();\n};",
+    "analysis_after_completion": {
+      "changes_made": [
+        "✅ Added 4 new API functions to src/services/api.js",
+        "✅ All functions properly formatted for async/await usage",
+        "✅ Proper error handling will be done in React components",
+        "✅ Ready to be imported and used in frontend components"
+      ]
+    }
+  },
+
+  "phase_5_analysis": {
+    "title": "CODEBASE ANALYSIS - Hospital Fleet Management Page",
+    "current_state": {
+      "file": "src/pages/hospitals/HospitalFleet.jsx",
+      "current_functionality": "Displays and manages hospital ambulances",
+      "structure": "React component showing ambulance fleet details"
+    },
+    "required_changes": {
+      "add_section": "Blood Alerts section to display incoming requests",
+      "add_ui": "Cards showing alert details with Accept/Reject buttons",
+      "add_state": "State management for alerts",
+      "add_effects": "useEffect to fetch alerts on component mount"
+    }
+  },
+
+  "phase_5_implementation": {
+    "title": "UPDATED HOSPITAL FLEET MANAGEMENT",
+    "file_path": "src/pages/hospitals/HospitalFleet.jsx",
+    "complete_code": "import React, { useState, useEffect } from 'react';\nimport { getBloodAlerts, acceptBloodAlert, rejectBloodAlert } from '../../services/api';\nimport './HospitalFleet.css';\n\nconst HospitalFleet = () => {\n  const [bloodAlerts, setBloodAlerts] = useState([]);\n  const [loading, setLoading] = useState(true);\n  const [error, setError] = useState(null);\n  const hospitalId = localStorage.getItem('hospitalId');\n\n  useEffect(() => {\n    fetchBloodAlerts();\n    const interval = setInterval(fetchBloodAlerts, 30000);\n    return () => clearInterval(interval);\n  }, []);\n\n  const fetchBloodAlerts = async () => {\n    try {\n      setLoading(true);\n      const result = await getBloodAlerts(hospitalId);\n      if (result.success) {\n        setBloodAlerts(result.bloodAlerts);\n        setError(null);\n      }\n    } catch (err) {\n      setError('Failed to fetch blood alerts');\n    } finally {\n      setLoading(false);\n    }\n  };\n\n  const handleAccept = async (alertId) => {\n    if (!window.confirm('Are you sure you want to accept this blood request? This will reduce your blood inventory.')) {\n      return;\n    }\n    try {\n      const result = await acceptBloodAlert(hospitalId, alertId);\n      if (result.success) {\n        alert('Blood request accepted successfully!');\n        fetchBloodAlerts();\n      }\n    } catch (err) {\n      alert('Failed to accept blood request');\n    }\n  };\n\n  const handleReject = async (alertId) => {\n    const reason = prompt('Please provide a reason for rejection:');\n    if (!reason) return;\n    try {\n      const result = await rejectBloodAlert(hospitalId, alertId, reason);\n      if (result.success) {\n        alert('Blood request rejected');\n        fetchBloodAlerts();\n      }\n    } catch (err) {\n      alert('Failed to reject blood request');\n    }\n  };\n\n  const getUrgencyBadgeClass = (urgency) => {\n    switch (urgency) {\n      case 'critical': return 'badge-critical';\n      case 'urgent': return 'badge-urgent';\n      default: return 'badge-normal';\n    }\n  };\n\n  const pendingAlerts = bloodAlerts.filter(a => a.status === 'pending');\n  const respondedAlerts = bloodAlerts.filter(a => a.status !== 'pending');\n\n  return (\n    <div className=\"hospital-fleet-container\">\n      <h1>Hospital Fleet Management</h1>\n\n      {/* Blood Alerts Section */}\n      <div className=\"blood-alerts-section\">\n        <div className=\"section-header\">\n          <h2>🩸 Incoming Blood Requests</h2>\n          <span className=\"alert-count\">{pendingAlerts.length} Pending</span>\n        </div>\n\n        {loading && <div className=\"loading\">Loading alerts...</div>}\n        {error && <div className=\"error\">{error}</div>}\n\n        {!loading && pendingAlerts.length === 0 && (\n          <div className=\"no-alerts\">\n            <p>✅ No pending blood requests</p>\n          </div>\n        )}\n\n        {!loading && pendingAlerts.length > 0 && (\n          <div className=\"alerts-grid\">\n            {pendingAlerts.map(alert => (\n              <div key={alert.id} className=\"alert-card\">\n                <div className=\"alert-header\">\n                  <span className=\"alert-id\">{alert.id}</span>\n                  <span className={`urgency-badge ${getUrgencyBadgeClass(alert.urgency)}`}>\n                    {alert.urgency.toUpperCase()}\n                  </span>\n                </div>\n\n                <div className=\"alert-body\">\n                  <div className=\"alert-info\">\n                    <h3>🏥 {alert.requestingHospitalName}</h3>\n                    <p><strong>📍 Address:</strong> {alert.requestingHospitalAddress}</p>\n                    <p><strong>📞 Phone:</strong> {alert.requestingHospitalPhone}</p>\n                    <p><strong>📏 Distance:</strong> {alert.distance} km</p>\n                  </div>\n\n                  <div className=\"blood-info\">\n                    <h4>Blood Requirements:</h4>\n                    <p><strong>Type:</strong> <span className=\"blood-type\">{alert.bloodType}</span></p>\n                    <p><strong>Units:</strong> {alert.unitsRequested} liters</p>\n                  </div>\n\n                  {alert.casualtyDetails && (\n                    <div className=\"casualty-info\">\n                      <h4>Casualty Details:</h4>\n                      <p><strong>Name:</strong> {alert.casualtyDetails.name || 'N/A'}</p>\n                      <p><strong>Age:</strong> {alert.casualtyDetails.age || 'N/A'}</p>\n                      <p><strong>Injury:</strong> {alert.casualtyDetails.injuryType || 'N/A'}</p>\n                    </div>\n                  )}\n\n                  <div className=\"alert-timestamp\">\n                    <small>Requested: {new Date(alert.createdAt).toLocaleString()}</small>\n                  </div>\n                </div>\n\n                <div className=\"alert-actions\">\n                  <button \n                    className=\"btn-accept\"\n                    onClick={() => handleAccept(alert.id)}\n                  >\n                    ✅ Accept Request\n                  </button>\n                  <button \n                    className=\"btn-reject\"\n                    onClick={() => handleReject(alert.id)}\n                  >\n                    ❌ Reject Request\n                  </button>\n                </div>\n              </div>\n            ))}\n          </div>\n        )}\n\n        {/* Responded Alerts History */}\n        {respondedAlerts.length > 0 && (\n          <div className=\"responded-alerts\">\n            <h3>📋 Request History</h3>\n            <div className=\"history-list\">\n              {respondedAlerts.slice(0, 5).map(alert => (\n                <div key={alert.id} className={`history-item ${alert.status}`}>\n                  <span className=\"hospital-name\">{alert.requestingHospitalName}</span>\n                  <span className=\"blood-type\">{alert.bloodType} ({alert.unitsRequested}L)</span>\n                  <span className={`status-badge ${alert.status}`}>\n                    {alert.status === 'accepted' ? '✅ Accepted' : '❌ Rejected'}\n                  </span>\n                  <span className=\"timestamp\">\n                    {new Date(alert.respondedAt).toLocaleDateString()}\n                  </span>\n                </div>\n              ))}\n            </div>\n          </div>\n        )}\n      </div>\n\n      {/* Existing Ambulance Fleet Section */}\n      <div className=\"ambulance-fleet-section\">\n        <h2>🚑 Ambulance Fleet</h2>\n        {/* Your existing ambulance fleet code here */}\n      </div>\n    </div>\n  );\n};\n\nexport default HospitalFleet;",
+    "css_file": {
+      "path": "src/pages/hospitals/HospitalFleet.css",
+      "complete_code": ".hospital-fleet-container {\n  padding: 20px;\n  max-width: 1400px;\n  margin: 0 auto;\n}\n\n.blood-alerts-section {\n  background: #f9f9f9;\n  border-radius: 12px;\n  padding: 25px;\n  margin-bottom: 30px;\n  box-shadow: 0 2px 8px rgba(0,0,0,0.1);\n}\n\n.section-header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  margin-bottom: 20px;\n  padding-bottom: 15px;\n  border-bottom: 2px solid #e0e0e0;\n}\n\n.section-header h2 {\n  margin: 0;\n  color: #333;\n}\n\n.alert-count {\n  background: #ff5722;\n  color: white;\n  padding: 8px 16px;\n  border-radius: 20px;\n  font-weight: bold;\n  font-size: 14px;\n}\n\n.loading, .error, .no-alerts {\n  text-align: center;\n  padding: 30px;\n  color: #666;\n}\n\n.error {\n  color: #d32f2f;\n}\n\n.no-alerts p {\n  font-size: 18px;\n  color: #4caf50;\n}\n\n.alerts-grid {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));\n  gap: 20px;\n}\n\n.alert-card {\n  background: white;\n  border-radius: 10px;\n  padding: 20px;\n  box-shadow: 0 4px 12px rgba(0,0,0,0.15);\n  border-left: 5px solid #2196f3;\n  transition: transform 0.2s, box-shadow 0.2s;\n}\n\n.alert-card:hover {\n  transform: translateY(-5px);\n  box-shadow: 0 6px 20px rgba(0,0,0,0.2);\n}\n\n.alert-header {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  margin-bottom: 15px;\n}\n\n.alert-id {\n  font-family: monospace;\n  font-size: 12px;\n  color: #666;\n}\n\n.urgency-badge {\n  padding: 5px 12px;\n  border-radius: 15px;\n  font-size: 11px;\n  font-weight: bold;\n  text-transform: uppercase;\n}\n\n.badge-critical {\n  background: #d32f2f;\n  color: white;\n  animation: pulse 1.5s infinite;\n}\n\n.badge-urgent {\n  background: #ff9800;\n  color: white;\n}\n\n.badge-normal {\n  background: #4caf50;\n  color: white;\n}\n\n@keyframes pulse {\n  0%, 100% { opacity: 1; }\n  50% { opacity: 0.7; }\n}\n\n.alert-body {\n  margin-bottom: 20px;\n}\n\n.alert-info h3 {\n  margin: 0 0 10px 0;\n  color: #2196f3;\n  font-size: 18px;\n}\n\n.alert-info p, .blood-info p, .casualty-info p {\n  margin: 5px 0;\n  color: #555;\n  font-size: 14px;\n}\n\n.blood-info, .casualty-info {\n  background: #f5f5f5;\n  padding: 12px;\n  border-radius: 8px;\n  margin-top: 10px;\n}\n\n.blood-info h4, .casualty-info h4 {\n  margin: 0 0 8px 0;\n  color: #333;\n  font-size: 14px;\n}\n\n.blood-type {\n  background: #e91e63;\n  color: white;\n  padding: 3px 10px;\n  border-radius: 5px;\n  font-weight: bold;\n}\n\n.alert-timestamp {\n  margin-top: 15px;\n  padding-top: 10px;\n  border-top: 1px solid #e0e0e0;\n}\n\n.alert-timestamp small {\n  color: #999;\n  font-size: 12px;\n}\n\n.alert-actions {\n  display: flex;\n  gap: 10px;\n  margin-top: 15px;\n}\n\n.btn-accept, .btn-reject {\n  flex: 1;\n  padding: 12px;\n  border: none;\n  border-radius: 8px;\n  font-size: 14px;\n  font-weight: bold;\n  cursor: pointer;\n  transition: all 0.3s;\n}\n\n.btn-accept {\n  background: #4caf50;\n  color: white;\n}\n\n.btn-accept:hover {\n  background: #45a049;\n  transform: scale(1.05);\n}\n\n.btn-reject {\n  background: #f44336;\n  color: white;\n}\n\n.btn-reject:hover {\n  background: #da190b;\n  transform: scale(1.05);\n}\n\n.responded-alerts {\n  margin-top: 30px;\n  padding-top: 20px;\n  border-top: 2px solid #e0e0e0;\n}\n\n.responded-alerts h3 {\n  color: #666;\n  margin-bottom: 15px;\n}\n\n.history-list {\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n}\n\n.history-item {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 12px 15px;\n  background: white;\n  border-radius: 8px;\n  border-left: 4px solid #ccc;\n  font-size: 14px;\n}\n\n.history-item.accepted {\n  border-left-color: #4caf50;\n}\n\n.history-item.rejected {\n  border-left-color: #f44336;\n}\n\n.hospital-name {\n  font-weight: bold;\n  color: #333;\n}\n\n.status-badge {\n  padding: 4px 10px;\n  border-radius: 12px;\n  font-size: 12px;\n  font-weight: bold;\n}\n\n.status-badge.accepted {\n  background: #e8f5e9;\n  color: #4caf50;\n}\n\n.status-badge.rejected {\n  background: #ffebee;\n  color: #f44336;\n}\n\n.timestamp {\n  color: #999;\n  font-size: 12px;\n}\n\n.ambulance-fleet-section {\n  margin-top: 40px;\n}"
+    },
+    "analysis_after_completion": {
+      "changes_made": [
+        "✅ Added blood alerts section to HospitalFleet.jsx",
+        "✅ Implemented state management for alerts (loading, error, data)",
+        "✅ Added useEffect to fetch alerts on mount and auto-refresh every 30s",
+        "✅ Created alert cards with all request details displayed",
+        "✅ Added Accept and Reject buttons with confirmation dialogs",
+        "✅ Implemented urgency badges (critical/urgent/normal) with animations",
+        "✅ Added request history section showing past responses",
+        "✅ Created comprehensive CSS with responsive design",
+        "✅ Color-coded alerts by urgency level",
+        "✅ Hover effects and smooth transitions"
+      ]
+    }
+  },
+
+  "complete_workflow": {
+    "title": "END-TO-END BLOOD ALERT WORKFLOW",
+    "step_1": {
+      "action": "Casualty assigned to best hospital",
+      "location": "Backend - casualtyController.js when hospital matching happens",
+      "trigger": "findBestHospital() is called and returns best hospital + nearest hospital",
+      "code_addition_needed": "// In casualtyController.js after finding best hospital\nif (bestHospital && bestHospital.nearestHospitalForBlood) {\n  // Automatically send blood alert to nearest hospital\n  const alertPayload = {\n    bestHospitalId: bestHospital.hospital.id,\n    bloodType: casualty.bloodType,\n    unitsNeeded: casualty.bloodUnitsNeeded || 5,\n    urgency: casualty.severity === 'critical' ? 'critical' : 'urgent',\n    casualtyInfo: {\n      name: casualty.name,\n      age: casualty.age,\n      injuryType: casualty.injuryType\n    }\n  };\n  // Call blood alert function\n  await sendBloodAlertToNearest(alertPayload);\n}"
+    },
+    "step_2": {
+      "action": "Console logs nearest hospital",
+      "output": "Formatted box showing best hospital and nearest hospital with distance"
+    },
+    "step_3": {
+      "action": "Blood alert created and stored",
+      "location": "hospitals.json -> nearest hospital's bloodAlerts array",
+      "data": "Alert object with all details"
+    },
+    "step_4": {
+      "action": "Nearest hospital views alerts",
+      "location": "Frontend - HospitalFleet.jsx",
+      "display": "Cards showing pending blood requests with all details"
+    },
+    "step_5": {
+      "action": "Hospital responds to alert",
+      "options": [
+        "Accept - Blood inventory reduced, status changed to 'accepted'",
+        "Reject - Status changed to 'rejected', reason stored"
+      ]
+    },
+    "step_6": {
+      "action": "Alert history maintained",
+      "location": "Same bloodAlerts array, filtered by status"
+    }
+  },
+
+  "integration_checklist": {
+    "backend_tasks": [
+      "✅ Update hospitalMatcher.js with enhanced logging",
+      "✅ Add bloodAlerts: [] to all hospitals in hospitals.json",
+      "✅ Create bloodAlertController.js",
+      "✅ Create routes/bloodAlerts.js",
+      "✅ Register routes in main app file",
+      "✅ Test endpoints with Postman"
     ],
-    "from_distanceUtils_js": [
-      "calculateDistance(lat1, lon1, lat2, lon2)"
+    "frontend_tasks": [
+      "✅ Add blood alert functions to api.js",
+      "✅ Update HospitalFleet.jsx component",
+      "✅ Create HospitalFleet.css",
+      "✅ Test UI rendering",
+      "✅ Test accept/reject functionality"
     ],
-    "from_dataAccess_js": [
-      "readHospitals()",
-      "readBloodRequests()",
-      "writeBloodRequests(requests)"
-    ],
-    "existing_endpoints": [
-      "POST /api/blood-requests - Create blood request",
-      "GET /api/blood-requests - Get all requests",
-      "PATCH /api/blood-requests/:id/approve - Approve request",
-      "PATCH /api/blood-requests/:id/reject - Reject request"
+    "testing_tasks": [
+      "Test finding nearest hospital",
+      "Test alert creation",
+      "Test alert display in UI",
+      "Test accept functionality and inventory reduction",
+      "Test reject functionality",
+      "Test auto-refresh",
+      "Test with multiple alerts"
     ]
   },
 
-  "testing_checklist": [
-    "✓ Test finding nearest hospital when multiple hospitals exist",
-    "✓ Test when nearest hospital doesn't have required blood type",
-    "✓ Test when nearest hospital has insufficient units",
-    "✓ Test blood request creation and storage in JSON",
-    "✓ Test UI displays correct nearest hospital information",
-    "✓ Test donor hospital sees incoming request in dashboard",
-    "✓ Test approve/reject functionality updates request status",
-    "✓ Test edge case: only one hospital in system",
-    "✓ Test edge case: requesting hospital is the only one with blood"
-  ],
+  "example_console_output": {
+    "when": "findBestHospital() is called",
+    "output": "======================================================================\n🏥 NEAREST HOSPITAL TO BEST HOSPITAL FOUND\n======================================================================\n📍 Best/Destination Hospital:\n   ID: 1\n   Name: City General Hospital\n   Location: 123 Main Street, Kathmandu\n\n🩸 Nearest Hospital (Blood Donor Candidate):\n   ID: 2\n   Name: Metro Medical Center\n   Address: 456 Central Avenue, Kathmandu\n   Phone: +977-1-4567891\n   📏 Distance: 3.42 km\n======================================================================\n\n🔄 Processing blood alert request...\n✅ Blood alert sent successfully\n\n============================================================\n✨ BLOOD ALERT SENT SUCCESSFULLY ✨\n============================================================"
+  },
 
-  "optional_enhancements": [
-    {
-      "feature": "Multi-Hospital Alert",
-      "description": "If nearest hospital rejects, automatically alert next nearest hospital",
-      "implementation": "On reject, find next nearest hospital and create new request"
-    },
-    {
-      "feature": "Broadcast Mode",
-      "description": "Send alert to top 3 nearest hospitals simultaneously",
-      "implementation": "Create multiple blood requests, first to approve wins"
-    },
-    {
-      "feature": "Blood Availability Filter",
-      "description": "Only alert hospitals that actually have the required blood",
-      "implementation": "Filter hospitals by blood inventory before finding nearest"
-    },
-    {
-      "feature": "Real-time Notifications",
-      "description": "Push notifications to donor hospital when request arrives",
-      "implementation": "Add WebSocket or polling mechanism for instant alerts"
-    }
-  ]
+  "deployment_notes": {
+    "important": [
+      "Ensure hospitals.json has bloodAlerts: [] for all hospitals before deploying",
+      "Test with at least 3 hospitals to see proper nearest hospital selection",
+      "Console logs will appear in backend terminal",
+      "Frontend auto-refreshes alerts every 30 seconds",
+      "Blood inventory is automatically reduced when alert is accepted"
+    ],
+    "optional_enhancements": [
+      "Add email/SMS notifications to donor hospital",
+      "Add real-time updates using WebSockets",
+      "Add ability to request from multiple nearby hospitals",
+      "Add distance-based auto-rejection if too far",
+      "Add blood type compatibility checking (A+ can receive from A+, A-, O+, O-)"
+    ]
+  }
 }

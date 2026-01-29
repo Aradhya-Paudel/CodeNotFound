@@ -111,6 +111,45 @@ const addCasualtyToAccident = (req, res) => {
         eta: eta,
         requiredSpecialist: bestMatch.requiredSpecialist,
       };
+
+      // Automatic Blood Alert Trigger
+      if (bestMatch.nearestHospitalForBlood) {
+        const nearestHospital = bestMatch.nearestHospitalForBlood;
+        const requestingHospital = bestMatch.hospital;
+        
+        // Find the full hospital object to get current alerts
+        const nearestHospitalFull = hospitals.find(h => h.id === nearestHospital.id);
+        
+        if (nearestHospitalFull) {
+          const bloodAlert = {
+            id: `BA-${Date.now()}`,
+            requestingHospitalId: requestingHospital.id,
+            requestingHospitalName: requestingHospital.name,
+            requestingHospitalPhone: requestingHospital.phone,
+            requestingHospitalAddress: requestingHospital.address,
+            bloodType: casualty.bloodType,
+            unitsRequested: casualty.bloodUnitsNeeded || 5,
+            urgency: casualty.severity === 'critical' ? 'critical' : 'urgent',
+            status: 'pending',
+            distance: nearestHospital.distanceFromBest,
+            casualtyDetails: {
+              name: casualty.name,
+              age: casualty.age,
+              injuryType: casualty.injuryType
+            },
+            createdAt: new Date().toISOString(),
+            respondedAt: null,
+            responseReason: null
+          };
+
+          const currentAlerts = nearestHospitalFull.bloodAlerts || [];
+          updateHospital(nearestHospital.id, {
+            bloodAlerts: [...currentAlerts, bloodAlert]
+          });
+          
+          console.log(`✅ Automatic Blood Alert Sent from ${requestingHospital.name} to ${nearestHospital.name}`);
+        }
+      }
     }
 
     // Update accident with casualty info

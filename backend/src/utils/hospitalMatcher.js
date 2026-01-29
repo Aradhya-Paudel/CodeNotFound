@@ -165,24 +165,33 @@ const findNearestHospitalToHospital = (hospitals, referenceHospital) => {
     }
   });
   
-  // Console log when nearest hospital is found
+  // Enhanced console logging with formatted output
   if (nearest) {
-    console.log("=== NEAREST HOSPITAL FOUND ===");
-    console.log("Reference Hospital:", {
-      id: referenceHospital.id,
-      name: referenceHospital.name
-    });
-    console.log("Nearest Hospital:", {
-      id: nearest.id,
-      name: nearest.name,
-      address: nearest.address,
-      phone: nearest.phone,
-      distance: `${Math.round(minDist * 100) / 100} km`
-    });
-    console.log("==============================");
+    const distanceKm = Math.round(minDist * 100) / 100;
+    console.log("\n" + "=".repeat(70));
+    console.log("🏥 NEAREST HOSPITAL TO BEST HOSPITAL FOUND");
+    console.log("=".repeat(70));
+    console.log("📍 Best/Destination Hospital:");
+    console.log(`   ID: ${referenceHospital.id}`);
+    console.log(`   Name: ${referenceHospital.name}`);
+    console.log(`   Location: ${referenceHospital.address}`);
+    console.log("");
+    console.log("🩸 Nearest Hospital (Blood Donor Candidate):");
+    console.log(`   ID: ${nearest.id}`);
+    console.log(`   Name: ${nearest.name}`);
+    console.log(`   Address: ${nearest.address}`);
+    console.log(`   Phone: ${nearest.phone}`);
+    console.log(`   📏 Distance: ${distanceKm} km`);
+    console.log("=".repeat(70) + "\n");
+    
+    // Return hospital object with distanceFromBest property
+    return {
+      ...nearest,
+      distanceFromBest: distanceKm
+    };
   }
   
-  return nearest;
+  return null;
 };
 
 /**
@@ -258,12 +267,12 @@ const findBestHospital = (
       hospitals,
       best.hospital,
     );
-    if (nearestToBest) {
-      console.log("Nearest hospital to the best hospital:", nearestToBest);
-    } else {
-      console.log("No nearest hospital found for the best hospital.");
-    }
-    return best;
+    
+    // Return best hospital with nearest hospital info attached
+    return {
+      ...best,
+      nearestHospitalForBlood: nearestToBest
+    };
   }
   return null;
 };

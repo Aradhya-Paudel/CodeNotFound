@@ -78,7 +78,8 @@
         "Orthopedics",
         "Emergency"
       ],
-      "isAvailable": true
+      "isAvailable": true,
+      "bloodAlerts": []
     },
     {
       "id": 2,
@@ -157,7 +158,8 @@
         "General Surgery",
         "Gynecology"
       ],
-      "isAvailable": true
+      "isAvailable": true,
+      "bloodAlerts": []
     },
     {
       "id": 3,
@@ -236,7 +238,8 @@
         "Ophthalmology",
         "Emergency"
       ],
-      "isAvailable": true
+      "isAvailable": true,
+      "bloodAlerts": []
     },
     {
       "id": 4,
@@ -315,7 +318,8 @@
         "ENT",
         "Emergency"
       ],
-      "isAvailable": true
+      "isAvailable": true,
+      "bloodAlerts": []
     },
     {
       "id": 5,
@@ -328,7 +332,7 @@
       "latitude": 28.2045,
       "longitude": 83.991,
       "ambulanceCount": 5,
-      "bedsAvailable": 22,
+      "bedsAvailable": 19,
       "bloodInventory": {
         "total": 820,
         "bloodTypes": [
@@ -394,7 +398,8 @@
         "Gynecology",
         "Emergency"
       ],
-      "isAvailable": true
+      "isAvailable": true,
+      "bloodAlerts": []
     }
   ]
 }

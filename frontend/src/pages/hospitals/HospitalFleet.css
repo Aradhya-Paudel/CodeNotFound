@@ -1,0 +1,265 @@
+.hospital-fleet-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.blood-alerts-section {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.alert-count {
+  background: #ff5722;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.loading, .error, .no-alerts {
+  text-align: center;
+  padding: 30px;
+  color: #666;
+}
+
+.error {
+  color: #d32f2f;
+}
+
+.no-alerts p {
+  font-size: 18px;
+  color: #4caf50;
+}
+
+.alerts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.alert-card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-left: 5px solid #2196f3;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.alert-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.alert-id {
+  font-family: monospace;
+  font-size: 12px;
+  color: #666;
+}
+
+.urgency-badge {
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.badge-critical {
+  background: #d32f2f;
+  color: white;
+  animation: pulse 1.5s infinite;
+}
+
+.badge-urgent {
+  background: #ff9800;
+  color: white;
+}
+
+.badge-normal {
+  background: #4caf50;
+  color: white;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.alert-body {
+  margin-bottom: 20px;
+}
+
+.alert-info h3 {
+  margin: 0 0 10px 0;
+  color: #2196f3;
+  font-size: 18px;
+}
+
+.alert-info p, .blood-info p, .casualty-info p {
+  margin: 5px 0;
+  color: #555;
+  font-size: 14px;
+}
+
+.blood-info, .casualty-info {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.blood-info h4, .casualty-info h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.blood-type {
+  background: #e91e63;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.alert-timestamp {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.alert-timestamp small {
+  color: #999;
+  font-size: 12px;
+}
+
+.alert-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-accept, .btn-reject {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-accept {
+  background: #4caf50;
+  color: white;
+}
+
+.btn-accept:hover {
+  background: #45a049;
+  transform: scale(1.05);
+}
+
+.btn-reject {
+  background: #f44336;
+  color: white;
+}
+
+.btn-reject:hover {
+  background: #da190b;
+  transform: scale(1.05);
+}
+
+.responded-alerts {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.responded-alerts h3 {
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid #ccc;
+  font-size: 14px;
+}
+
+.history-item.accepted {
+  border-left-color: #4caf50;
+}
+
+.history-item.rejected {
+  border-left-color: #f44336;
+}
+
+.hospital-name {
+  font-weight: bold;
+  color: #333;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.status-badge.accepted {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+.status-badge.rejected {
+  background: #ffebee;
+  color: #f44336;
+}
+
+.timestamp {
+  color: #999;
+  font-size: 12px;
+}
+
+.ambulance-fleet-section {
+  margin-top: 40px;
+}
