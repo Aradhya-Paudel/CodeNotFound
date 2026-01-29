@@ -91,6 +91,11 @@ function AmbulanceUser() {
 
     fetchIncidents();
     fetchHospitals();
+
+    // Poll for new incidents every 3 seconds
+    const intervalId = setInterval(fetchIncidents, 3000);
+
+    return () => clearInterval(intervalId);
   }, [navigate]);
 
   // Calculate distance in meters using Haversine formula
