@@ -1,8 +1,9 @@
 const { calculateDistance } = require("./distanceUtils");
 
 /**
- * Hospital matching weights
+ * अस्पताल मिलाउने तौलहरू (weights)
  * Blood: 40%, Specialist: 30%, Distance: 20%, Beds: 10%
+ * Hospital matching weights (Blood: 40%, Specialist: 30%, Distance: 20%, Beds: 10%)
  */
 const WEIGHTS = {
   blood: 0.4,
@@ -12,7 +13,8 @@ const WEIGHTS = {
 };
 
 /**
- * Map injury types to required specialists
+ * चोटको प्रकार अनुसार चाहिने विशेषज्ञको mapping
+ * Maps injury types to required specialists
  */
 const INJURY_SPECIALIST_MAP = {
   "head injury": "Neurologist",
@@ -48,9 +50,10 @@ const INJURY_SPECIALIST_MAP = {
 };
 
 /**
- * Get required specialist based on injury type
- * @param {string} injuryType - Type of injury
- * @returns {string} Required specialist
+ * चोटको प्रकार अनुसार कुन विशेषज्ञ चाहिन्छ भनेर फेला पार्ने function
+ * Gets required specialist based on injury type
+ * @param {string} injuryType - चोटको प्रकार (Type of injury)
+ * @returns {string} चाहिएको विशेषज्ञ (Required specialist)
  */
 const getRequiredSpecialist = (injuryType) => {
   if (!injuryType) return "Emergency Medicine Specialist";
@@ -67,14 +70,15 @@ const getRequiredSpecialist = (injuryType) => {
 };
 
 /**
- * Calculate blood score (0-100)
- * @param {Object} hospital - Hospital object
- * @param {string} bloodType - Required blood type
- * @param {number} unitsNeeded - Units of blood needed
- * @returns {number} Blood score
+ * अस्पतालमा कति blood उपलब्ध छ भनेर ०-१०० को score निकाल्ने function
+ * Calculates blood score (0-100) for hospital
+ * @param {Object} hospital - अस्पतालको object (Hospital object)
+ * @param {string} bloodType - चाहिएको blood प्रकार (Required blood type)
+ * @param {number} unitsNeeded - चाहिएको units (Units of blood needed)
+ * @returns {number} Blood को score
  */
 const calculateBloodScore = (hospital, bloodType, unitsNeeded = 0) => {
-  if (!bloodType || unitsNeeded === 0) return 100; // Full score if no blood needed
+  if (!bloodType || unitsNeeded === 0) return 100; // रगत नचाहिएको भए पुरा अंक (Full score if no blood needed)
 
   const bloodInventory = hospital.bloodInventory?.bloodTypes || [];
   const bloodData = bloodInventory.find((b) => b.type === bloodType);
@@ -90,10 +94,11 @@ const calculateBloodScore = (hospital, bloodType, unitsNeeded = 0) => {
 };
 
 /**
- * Calculate specialist score (0-100)
- * @param {Object} hospital - Hospital object
- * @param {string} injuryType - Type of injury
- * @returns {number} Specialist score
+ * अस्पतालमा चाहिएको विशेषज्ञ कति छन् भनेर ०-१०० को score निकाल्ने function
+ * Calculates specialist score (0-100)
+ * @param {Object} hospital - अस्पतालको object (Hospital object)
+ * @param {string} injuryType - चोटको प्रकार (Type of injury)
+ * @returns {number} Specialist को score
  */
 const calculateSpecialistScore = (hospital, injuryType) => {
   const requiredSpecialist = getRequiredSpecialist(injuryType);
@@ -108,13 +113,13 @@ const calculateSpecialistScore = (hospital, injuryType) => {
 };
 
 /**
- * Calculate distance score (0-100)
- * Higher score for closer hospitals
- * @param {number} distance - Distance in km
- * @returns {number} Distance score
+ * अस्पताल कति टाढा छ भनेर ०-१०० को score निकाल्ने function
+ * Calculates distance score (0-100), nearer hospital gets higher score
+ * @param {number} distance - दूरी (Distance in km)
+ * @returns {number} Distance को score
  */
 const calculateDistanceScore = (distance) => {
-  // Max distance considered is 50km
+  // अधिकतम दूरी ५० किमी मात्र गनिन्छ (Max distance considered is 50km)
   const maxDistance = 50;
 
   if (distance <= 1) return 100;
@@ -124,9 +129,10 @@ const calculateDistanceScore = (distance) => {
 };
 
 /**
- * Calculate beds score (0-100)
- * @param {Object} hospital - Hospital object
- * @returns {number} Beds score
+ * अस्पतालमा कति बेड खाली छ भनेर ०-१०० को score निकाल्ने function
+ * Calculates beds score (0-100)
+ * @param {Object} hospital - अस्पतालको object (Hospital object)
+ * @returns {number} Beds को score
  */
 const calculateBedsScore = (hospital) => {
   const beds = hospital.bedsAvailable || 0;
@@ -139,17 +145,18 @@ const calculateBedsScore = (hospital) => {
 };
 
 /**
- * Find the hospital nearest to a given hospital (excluding itself)
- * @param {Array} hospitals - Array of hospital objects
- * @param {Object} referenceHospital - The hospital to find the nearest to
- * @returns {Object|null} The nearest hospital object or null if not found
+ * दिइएको अस्पतालबाट सबैभन्दा नजिकको अर्को अस्पताल फेला पार्ने function
+ * Finds the nearest hospital to a given hospital (excluding itself)
+ * @param {Array} hospitals - अस्पतालहरूको array (Array of hospital objects)
+ * @param {Object} referenceHospital - reference अस्पताल (The hospital to find the nearest to)
+ * @returns {Object|null} नजिकको अस्पताल (The nearest hospital object or null)
  */
 const findNearestHospitalToHospital = (hospitals, referenceHospital) => {
   if (!referenceHospital || !hospitals || hospitals.length === 0) return null;
-  
+
   let minDist = Infinity;
   let nearest = null;
-  
+
   hospitals.forEach((hospital) => {
     if (hospital.id !== referenceHospital.id) {
       const dist = calculateDistance(
@@ -164,8 +171,8 @@ const findNearestHospitalToHospital = (hospitals, referenceHospital) => {
       }
     }
   });
-  
-  // Enhanced console logging with formatted output
+
+  // राम्रो देखिने गरी console मा जानकारी देखाउने (Enhanced console logging with formatted output)
   if (nearest) {
     const distanceKm = Math.round(minDist * 100) / 100;
     console.log("\n" + "=".repeat(70));
@@ -183,24 +190,25 @@ const findNearestHospitalToHospital = (hospitals, referenceHospital) => {
     console.log(`   Phone: ${nearest.phone}`);
     console.log(`   📏 Distance: ${distanceKm} km`);
     console.log("=".repeat(70) + "\n");
-    
-    // Return hospital object with distanceFromBest property
+
+    // नजिकको अस्पतालको object फर्काउने जसमा दूरी पनि हुन्छ (Return hospital object with distanceFromBest property)
     return {
       ...nearest,
-      distanceFromBest: distanceKm
+      distanceFromBest: distanceKm,
     };
   }
-  
+
   return null;
 };
 
 /**
- * Find best matching hospital for a casualty
- * @param {Array} hospitals - Array of hospitals
- * @param {Object} casualtyInfo - Casualty information
- * @param {number} accidentLat - Accident latitude
- * @param {number} accidentLon - Accident longitude
- * @returns {Object} Best matching hospital with scores
+ * casualty को लागि सबैभन्दा राम्रो अस्पताल छान्ने function
+ * Finds best matching hospital for a casualty
+ * @param {Array} hospitals - अस्पतालहरूको array (Array of hospitals)
+ * @param {Object} casualtyInfo - casualty को जानकारी (Casualty information)
+ * @param {number} accidentLat - दुर्घटनाको latitude (Accident latitude)
+ * @param {number} accidentLon - दुर्घटनाको longitude (Accident longitude)
+ * @returns {Object} सबैभन्दा राम्रो अस्पताल (Best matching hospital with scores)
  */
 const findBestHospital = (
   hospitals,
@@ -262,28 +270,29 @@ const findBestHospital = (
 
   if (scoredHospitals.length > 0) {
     const best = scoredHospitals[0];
-    // Find nearest hospital to the best hospital
+    // सबैभन्दा राम्रो अस्पताल नजिकको अर्को अस्पताल फेला पार्ने (Find nearest hospital to the best hospital)
     const nearestToBest = findNearestHospitalToHospital(
       hospitals,
       best.hospital,
     );
-    
-    // Return best hospital with nearest hospital info attached
+
+    // सबैभन्दा राम्रो अस्पताल र नजिकको अस्पतालको जानकारी फर्काउने (Return best hospital with nearest hospital info attached)
     return {
       ...best,
-      nearestHospitalForBlood: nearestToBest
+      nearestHospitalForBlood: nearestToBest,
     };
   }
   return null;
 };
 
 /**
- * Get all hospitals ranked for a casualty
- * @param {Array} hospitals - Array of hospitals
- * @param {Object} casualtyInfo - Casualty information
- * @param {number} accidentLat - Accident latitude
- * @param {number} accidentLon - Accident longitude
- * @returns {Array} Ranked hospitals with scores
+ * casualty को लागि सबै अस्पताललाई score अनुसार क्रमबद्ध गर्ने function
+ * Gets all hospitals ranked for a casualty
+ * @param {Array} hospitals - अस्पतालहरूको array (Array of hospitals)
+ * @param {Object} casualtyInfo - casualty को जानकारी (Casualty information)
+ * @param {number} accidentLat - दुर्घटनाको latitude (Accident latitude)
+ * @param {number} accidentLon - दुर्घटनाको longitude (Accident longitude)
+ * @returns {Array} score अनुसार क्रमबद्ध अस्पतालहरू (Ranked hospitals with scores)
  */
 const rankHospitals = (hospitals, casualtyInfo, accidentLat, accidentLon) => {
   const { injuryType, bloodType, bloodUnitsNeeded } = casualtyInfo;
@@ -335,7 +344,7 @@ const rankHospitals = (hospitals, casualtyInfo, accidentLat, accidentLon) => {
       };
     });
 
-  // Sort by total score (descending)
+  // कुल अंक (total score) अनुसार घट्दो क्रममा क्रमबद्ध गर्ने (Sort by total score descending)
   scoredHospitals.sort((a, b) => b.scores.total - a.scores.total);
   return scoredHospitals;
 };
